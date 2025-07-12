@@ -5,25 +5,19 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Odkrywca Mapy Politycznej</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
   <style>
-    body { font-family:'Lato',sans-serif; background:#eef2f9 }
-    h1,#question-text,button { font-family:'Roboto Mono',monospace }
-    #map-wrapper { position:relative; max-width:1000px; margin:auto; cursor:crosshair }
-    #map-image { display:block; width:100%; height:auto; border:1px solid #ccc }
+    body { font-family: Lato, sans-serif; background: #eef2f9; }
+    h1,#question-text,button { font-family: "Roboto Mono", monospace }
+    #map-wrapper { position: relative; max-width: 1000px; margin: auto; cursor: crosshair }
+    #map-image   { width: 100%; display: block; border:1px solid #ccc }
     .marker {
-      position:absolute; width:30px; height:30px; border-radius:50%;
-      transform:translate(-50%,-50%); display:flex;
-      align-items:center; justify-content:center;
-      font-weight:bold; font-size:20px; color:white; z-index:10;
+      position:absolute; width:30px; height:30px;
+      border-radius:50%; transform:translate(-50%,-50%);
+      display:flex; align-items:center; justify-content:center;
+      font-size:20px; color:#fff; z-index:10;
     }
-    .marker.correct { background:rgba(22,163,74,0.8); border:2px solid #fff }
-    .marker.incorrect {
-      background:rgba(220,38,38,0.8); border:2px solid #fff;
-      animation:fadeOut 1s forwards;
-    }
+    .marker.correct   { background:rgba(22,163,74,0.8); border:2px solid #fff }
+    .marker.incorrect { background:rgba(220,38,38,0.8); border:2px solid #fff; animation:fadeOut 1s forwards; }
     .country-label {
       position:absolute; transform:translate(-50%,10px);
       background:rgba(0,0,0,0.7); color:#fff;
@@ -35,60 +29,59 @@
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-4">
 
-  <div class="w-full max-w-5xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-2xl border border-gray-200">
+  <div class="w-full max-w-5xl mx-auto bg-white p-6 rounded-xl shadow-lg">
     <div class="text-center mb-6">
-      <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Odkrywca Mapy Politycznej</h1>
-      <p id="question-text" class="text-blue-600 mt-3 text-lg h-8"></p>
+      <h1 class="text-3xl font-bold">Odkrywca Mapy Politycznej</h1>
+      <p id="question-text" class="text-blue-600 mt-2 text-lg h-8"></p>
     </div>
-
     <div id="map-wrapper">
-      <img id="map-image" src="licensed-image.jpg" alt="Mapa polityczna Europy">
+      <img id="map-image" src="licensed-image.jpg" alt="Mapa Europy">
       <div id="marker-container"></div>
     </div>
-    
     <div id="feedback-container" class="text-center mt-6 h-10"></div>
   </div>
 
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded',()=>{
+    //
+    // Punkt-w-wielokącie (ray-cast)
+    //
+    function pointInPoly(x,y,poly) {
+      let inside=false;
+      for(let i=0,j=poly.length-1;i<poly.length;j=i++) {
+        const xi=poly[i][0], yi=poly[i][1];
+        const xj=poly[j][0], yj=poly[j][1];
+        const intersect = ((yi>y)!==(yj>y)) &&
+                          (x < (xj-xi)*(y-yi)/(yj-yi)+xi);
+        if(intersect) inside = !inside;
+      }
+      return inside;
+    }
+
     const gameData = [
+      // Polska jako wielokąt (punkty [x%,y%])
       {
         id: 'pl',
         name: "Polska",
         question: "Zaznacz na mapie Polskę.",
-        // poprawione hotspoty
-        coords: { x: 54, y: 49, w: 10, h: 11 }
+        shape: 'poly',
+        coords: [
+          [50, 45], [48, 47], [46, 49], [45, 52],
+          [45, 55], [47, 57], [50, 58], [53, 58],
+          [56, 56], [57, 53], [57, 50], [55, 48]
+        ]
       },
-      {
-        id: 'es',
-        name: "Hiszpania",
-        question: "Gdzie leży Hiszpania?",
-        coords: { x: 17, y: 76, w: 15, h: 16 }
-      },
-      {
-        id: 'it',
-        name: "Włochy",
-        question: "Zaznacz kraj, którego stolicą jest Rzym.",
-        coords: { x: 39, y: 67, w: 8, h: 17 }
-      },
-      {
-        id: 'no',
-        name: "Norwegia",
-        question: "Wskaż Norwegię.",
-        coords: { x: 34, y: 23, w: 13, h: 26 }
-      },
-      {
-        id: 'tr',
-        name: "Turcja",
-        question: "Znajdź Turcję.",
-        coords: { x: 66, y: 67, w: 18, h: 14 }
-      },
-      {
-        id: 'ua',
-        name: "Ukraina",
-        question: "Zaznacz Ukrainę.",
-        coords: { x: 57, y: 52, w: 14, h: 12 }
-      }
+      // Reszta nadal prostokąty
+      { id:'es', name:"Hiszpania", question:"Gdzie leży Hiszpania?",
+        shape:'rect', coords:{ x:17,y:76,w:15,h:16 } },
+      { id:'it', name:"Włochy", question:"Zaznacz kraj, którego stolicą jest Rzym.",
+        shape:'rect', coords:{ x:39,y:67,w:8,h:17 } },
+      { id:'no', name:"Norwegia", question:"Wskaż Norwegię.",
+        shape:'rect', coords:{ x:34,y:23,w:13,h:26 } },
+      { id:'tr', name:"Turcja", question:"Znajdź Turcję.",
+        shape:'rect', coords:{ x:66,y:67,w:18,h:14 } },
+      { id:'ua', name:"Ukraina", question:"Zaznacz Ukrainę.",
+        shape:'rect', coords:{ x:57,y:52,w:14,h:12 } }
     ];
 
     const mapWrapper      = document.getElementById('map-wrapper');
@@ -96,76 +89,79 @@
     const questionText    = document.getElementById('question-text');
     const feedbackContainer = document.getElementById('feedback-container');
 
-    let questions = [], currentQuestionIndex = 0, isGameActive = true;
+    let questions=[], idx=0, active=true;
 
-    function shuffle(arr) {
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
+    function shuffle(a){
+      for(let i=a.length-1;i>0;i--){
+        let j=Math.floor(Math.random()*(i+1));
+        [a[i],a[j]]=[a[j],a[i]];
       }
-      return arr;
+      return a;
     }
 
-    function loadQuestion() {
-      if (currentQuestionIndex >= questions.length) return endGame();
-      isGameActive = true;
-      questionText.textContent = questions[currentQuestionIndex].question;
+    function loadQuestion(){
+      if(idx>=questions.length) return endGame();
+      active=true;
+      questionText.textContent = questions[idx].question;
     }
 
-    function handleMapClick(e) {
-      if (!isGameActive) return;
-      const rect = mapWrapper.getBoundingClientRect();
-      const x = e.clientX - rect.left, y = e.clientY - rect.top;
-      const xP = x / rect.width * 100, yP = y / rect.height * 100;
-      const cur = questions[currentQuestionIndex];
-      const c = cur.coords;
-      const ok = xP >= c.x && xP <= c.x + c.w && yP >= c.y && yP <= c.y + c.h;
-      placeMarker(xP, yP, ok, cur.name);
-      if (ok) {
-        isGameActive = false;
-        currentQuestionIndex++;
-        setTimeout(loadQuestion, 1500);
-      }
-    }
-
-    function placeMarker(x, y, correct, name = '') {
-      const m = document.createElement('div');
-      m.className = `marker ${correct ? 'correct' : 'incorrect'}`;
-      m.style.left = `${x}%`; m.style.top = `${y}%`;
-      m.textContent = correct ? '✔' : '✖';
-      markerContainer.appendChild(m);
-
-      if (correct) {
-        const label = document.createElement('div');
-        label.className = 'country-label';
-        label.textContent = name;
-        label.style.left = `${x}%`;
-        label.style.top  = `${y}%`;
-        markerContainer.appendChild(label);
+    function handleClick(e){
+      if(!active) return;
+      const r=mapWrapper.getBoundingClientRect();
+      const xP=(e.clientX-r.left)/r.width*100;
+      const yP=(e.clientY-r.top)/r.height*100;
+      const cur=questions[idx];
+      let ok=false;
+      if(cur.shape==='rect'){
+        const c=cur.coords;
+        ok = xP>=c.x && xP<=c.x+c.w && yP>=c.y && yP<=c.y+c.h;
       } else {
-        setTimeout(() => m.remove(), 800);
+        ok = pointInPoly(xP,yP,cur.coords);
+      }
+      placeMarker(xP,yP,ok,cur.name);
+      if(ok){
+        active=false;
+        idx++;
+        setTimeout(loadQuestion,1200);
       }
     }
 
-    function endGame() {
-      questionText.textContent = "Gratulacje! Ukończyłeś wyzwanie!";
-      feedbackContainer.innerHTML = `
+    function placeMarker(x,y,correct,name=''){
+      const m=document.createElement('div');
+      m.className=`marker ${correct?'correct':'incorrect'}`;
+      m.style.left=`${x}%`; m.style.top=`${y}%`;
+      m.textContent=correct?'✔':'✖';
+      markerContainer.appendChild(m);
+      if(correct){
+        const l=document.createElement('div');
+        l.className='country-label';
+        l.style.left=`${x}%`; l.style.top=`${y}%`;
+        l.textContent=name;
+        markerContainer.appendChild(l);
+      } else {
+        setTimeout(()=>m.remove(),800);
+      }
+    }
+
+    function endGame(){
+      questionText.textContent="Gratulacje! Ukończyłeś wyzwanie!";
+      feedbackContainer.innerHTML=`
         <button id="reset-btn" class="bg-blue-600 hover:bg-blue-700
           text-white font-bold py-2 px-6 rounded-lg">
           Zagraj jeszcze raz
         </button>`;
-      document.getElementById('reset-btn').addEventListener('click', startGame);
+      document.getElementById('reset-btn').onclick=startGame;
     }
 
-    function startGame() {
-      feedbackContainer.innerHTML = '';
-      markerContainer.innerHTML   = '';
-      questions = shuffle([...gameData]);
-      currentQuestionIndex = 0;
+    function startGame(){
+      markerContainer.innerHTML='';
+      feedbackContainer.innerHTML='';
+      questions=shuffle([...gameData]);
+      idx=0;
       loadQuestion();
     }
 
-    mapWrapper.addEventListener('click', handleMapClick);
+    mapWrapper.onclick=handleClick;
     startGame();
   });
   </script>

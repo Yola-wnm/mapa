@@ -56,25 +56,26 @@
         id: 'pl',
         name: "Polska",
         question: "Zaznacz na mapie Polskę.",
-        coords: { x: 52, y: 50, w: 9, h: 9 }
+        // poprawione hotspoty
+        coords: { x: 54, y: 49, w: 10, h: 11 }
       },
       {
         id: 'es',
         name: "Hiszpania",
         question: "Gdzie leży Hiszpania?",
-        coords: { x: 17, y: 75, w: 15, h: 18 }
+        coords: { x: 17, y: 76, w: 15, h: 16 }
       },
       {
         id: 'it',
         name: "Włochy",
         question: "Zaznacz kraj, którego stolicą jest Rzym.",
-        coords: { x: 39, y: 66, w: 8, h: 18 }
+        coords: { x: 39, y: 67, w: 8, h: 17 }
       },
       {
         id: 'no',
         name: "Norwegia",
         question: "Wskaż Norwegię.",
-        coords: { x: 35, y: 22, w: 12, h: 25 }
+        coords: { x: 34, y: 23, w: 13, h: 26 }
       },
       {
         id: 'tr',
@@ -86,7 +87,7 @@
         id: 'ua',
         name: "Ukraina",
         question: "Zaznacz Ukrainę.",
-        coords: { x: 57, y: 53, w: 14, h: 12 }
+        coords: { x: 57, y: 52, w: 14, h: 12 }
       }
     ];
 
@@ -149,7 +150,7 @@
     function endGame() {
       questionText.textContent = "Gratulacje! Ukończyłeś wyzwanie!";
       feedbackContainer.innerHTML = `
-        <button id="reset-btn" class="bg-blue-600 hover:bg-blue-700 
+        <button id="reset-btn" class="bg-blue-600 hover:bg-blue-700
           text-white font-bold py-2 px-6 rounded-lg">
           Zagraj jeszcze raz
         </button>`;

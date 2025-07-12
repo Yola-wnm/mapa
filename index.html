@@ -34,28 +34,43 @@
       <p id="question-text" class="text-blue-600 mt-2 text-lg h-8"></p>
     </div>
     <div id="map-wrapper">
-      <img id="map-image" src="licensed-image.jpg" alt="Mapa polityczna Europy">
+      <img id="map-image" src="licensed-image.jpg" alt="Mapa Europy">
       <div id="marker-container"></div>
     </div>
     <div id="feedback-container" class="text-center mt-6 h-10"></div>
   </div>
 
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded',()=>{
+    // test funkcja punkt-w-wielokącie
+    function pointInPoly(x,y,poly){
+      let inside=false;
+      for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+        const xi=poly[i][0], yi=poly[i][1];
+        const xj=poly[j][0], yj=poly[j][1];
+        const intersect = ((yi>y)!==(yj>y))
+          && (x < (xj-xi)*(y-yi)/(yj-yi)+xi);
+        if(intersect) inside=!inside;
+      }
+      return inside;
+    }
+
     const gameData = [
-      // POLSKA jako prostokąt dokładnie wokół regionu POLAND
+      // POLSKA jako polygon (dokładny obrys)
       {
-        id: 'pl',
-        name: "Polska",
-        question: "Zaznacz na mapie Polskę.",
-        shape: 'rect',
-        coords: { x: 52, y: 47, w: 8, h: 10 }
+        id:'pl', name:"Polska", question:"Zaznacz na mapie Polskę.",
+        shape:'poly',
+        coords:[
+          [50,45], [48,47], [47,50], [47,54],
+          [49,57], [52,58], [56,56], [58,53],
+          [58,49], [55,47], [52,46]
+        ]
       },
-      { id:'es', name:"Hiszpania", question:"Gdzie leży Hiszpania?",        shape:'rect', coords:{ x:17,y:76,w:15,h:16 } },
-      { id:'it', name:"Włochy",    question:"Zaznacz kraj, którego stolicą jest Rzym.", shape:'rect', coords:{ x:39,y:67,w:8,h:17 } },
-      { id:'no', name:"Norwegia",  question:"Wskaż Norwegię.",             shape:'rect', coords:{ x:34,y:23,w:13,h:26 } },
-      { id:'tr', name:"Turcja",    question:"Znajdź Turcję.",               shape:'rect', coords:{ x:66,y:67,w:18,h:14 } },
-      { id:'ua', name:"Ukraina",   question:"Zaznacz Ukrainę.",             shape:'rect', coords:{ x:57,y:52,w:14,h:12 } }
+      { id:'es', name:"Hiszpania", question:"Gdzie leży Hiszpania?", shape:'rect', coords:{x:17,y:76,w:15,h:16} },
+      { id:'it', name:"Włochy", question:"Zaznacz kraj, którego stolicą jest Rzym.", shape:'rect', coords:{x:39,y:67,w:8,h:17} },
+      { id:'no', name:"Norwegia", question:"Wskaż Norwegię.", shape:'rect', coords:{x:34,y:23,w:13,h:26} },
+      { id:'tr', name:"Turcja", question:"Znajdź Turcję.", shape:'rect', coords:{x:66,y:67,w:18,h:14} },
+      { id:'ua', name:"Ukraina", question:"Zaznacz Ukrainę.", shape:'rect', coords:{x:57,y:52,w:14,h:12} }
     ];
 
     const mapWrapper      = document.getElementById('map-wrapper');
@@ -63,78 +78,82 @@
     const questionText    = document.getElementById('question-text');
     const feedbackContainer = document.getElementById('feedback-container');
 
-    let questions = [], idx = 0, active = true;
+    let questions=[], idx=0, active=true;
 
-    function shuffle(arr) {
-      for (let i = arr.length - 1; i > 0; i--) {
-        let j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
+    function shuffle(arr){
+      for(let i=arr.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [arr[i],arr[j]]=[arr[j],arr[i]];
       }
       return arr;
     }
 
-    function loadQuestion() {
-      if (idx >= questions.length) return endGame();
-      active = true;
+    function loadQuestion(){
+      if(idx>=questions.length) return endGame();
+      active=true;
       questionText.textContent = questions[idx].question;
     }
 
-    function handleClick(e) {
-      if (!active) return;
-      const r = mapWrapper.getBoundingClientRect();
-      const xP = (e.clientX - r.left) / r.width * 100;
-      const yP = (e.clientY - r.top)  / r.height * 100;
+    function handleClick(e){
+      if(!active) return;
+      const rect = mapWrapper.getBoundingClientRect();
+      const xP = (e.clientX-rect.left)/rect.width*100;
+      const yP = (e.clientY-rect.top)/rect.height*100;
       const cur = questions[idx];
-      const c = cur.coords;
-      let ok = (xP >= c.x && xP <= c.x + c.w && yP >= c.y && yP <= c.y + c.h);
-      placeMarker(xP, yP, ok, cur.name);
-      if (ok) {
-        active = false;
-        idx++;
-        setTimeout(loadQuestion, 1200);
-      }
-    }
-
-    function placeMarker(x, y, correct, name = '') {
-      const m = document.createElement('div');
-      m.className = `marker ${correct ? 'correct' : 'incorrect'}`;
-      m.style.left = `${x}%`;
-      m.style.top  = `${y}%`;
-      m.textContent = correct ? '✔' : '✖';
-      markerContainer.appendChild(m);
-      if (correct) {
-        const lbl = document.createElement('div');
-        lbl.className = 'country-label';
-        lbl.textContent = name;
-        lbl.style.left = `${x}%`;
-        lbl.style.top  = `${y}%`;
-        markerContainer.appendChild(lbl);
+      let ok=false;
+      if(cur.shape==='rect'){
+        const c=cur.coords;
+        ok = xP>=c.x && xP<=c.x+c.w && yP>=c.y && yP<=c.y+c.h;
       } else {
-        setTimeout(() => m.remove(), 800);
+        ok = pointInPoly(xP,yP,cur.coords);
+      }
+      placeMarker(xP,yP,ok,cur.name);
+      if(ok){
+        active=false;
+        idx++;
+        setTimeout(loadQuestion,1200);
       }
     }
 
-    function endGame() {
-      questionText.textContent = "Gratulacje! Ukończyłeś wyzwanie!";
-      feedbackContainer.innerHTML = `
-        <button id="reset-btn" class="bg-blue-600 hover:bg-blue-700
+    function placeMarker(x,y,correct,name=''){
+      const m=document.createElement('div');
+      m.className=`marker ${correct?'correct':'incorrect'}`;
+      m.style.left=`${x}%`; m.style.top=`${y}%`;
+      m.textContent=correct?'✔':'✖';
+      markerContainer.appendChild(m);
+      if(correct){
+        const l=document.createElement('div');
+        l.className='country-label';
+        l.style.left=`${x}%`; l.style.top=`${y}%`;
+        l.textContent=name;
+        markerContainer.appendChild(l);
+      } else {
+        setTimeout(()=>m.remove(),800);
+      }
+    }
+
+    function endGame(){
+      questionText.textContent="Gratulacje! Ukończyłeś wyzwanie!";
+      feedbackContainer.innerHTML=`
+        <button id="reset-btn" class="bg-blue-600 hover:bg-blue-700 
           text-white font-bold py-2 px-6 rounded-lg">
           Zagraj jeszcze raz
         </button>`;
       document.getElementById('reset-btn').onclick = startGame;
     }
 
-    function startGame() {
-      markerContainer.innerHTML = '';
-      feedbackContainer.innerHTML = '';
-      questions = shuffle([...gameData]);
-      idx = 0;
+    function startGame(){
+      markerContainer.innerHTML='';
+      feedbackContainer.innerHTML='';
+      questions=shuffle([...gameData]);
+      idx=0;
       loadQuestion();
     }
 
-    mapWrapper.addEventListener('click', handleClick);
+    mapWrapper.addEventListener('click',handleClick);
     startGame();
   });
   </script>
+
 </body>
 </html>

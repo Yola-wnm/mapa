@@ -21,27 +21,11 @@
   </script>
 
   <meta charset="UTF-8">
-  <!-- Umożliwia zoomowanie całej strony; aktualizowane dynamicznie przy orientacji -->
-  <meta name="viewport" id="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5, user-scalable=yes">
+  <!-- Stałe ustawienia viewport z możliwością pinch-zoom całej strony -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <title>Odkrywca Mapy Politycznej</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    // Dostosuj meta viewport przy zmianie orientacji
-    function updateViewport() {
-      const vp = document.getElementById('viewport');
-      if (window.innerWidth > window.innerHeight) {
-        // landscape: bazuj na wysokości urządzenia
-        vp.setAttribute('content', 'width=device-height, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5, user-scalable=yes');
-      } else {
-        // portrait
-        vp.setAttribute('content', 'width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5, user-scalable=yes');
-      }
-    }
-    window.addEventListener('orientationchange', () => setTimeout(updateViewport, 100));
-    window.addEventListener('load', updateViewport);
-  </script>
   <style>
-    /* Pozwól na zoom całej strony */
     html, body {
       margin: 0;
       padding: 0;
@@ -59,14 +43,12 @@
       box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
       border: 1px solid #e5e7eb;
       padding: 1rem;
-      touch-action: manipulation;
     }
     #map-wrapper {
       position: relative;
       width: 100%;
       margin: auto;
       cursor: crosshair;
-      touch-action: none;
     }
     #map-image {
       width: 100%;
@@ -137,7 +119,7 @@
     }
 
     function getEventCoords(e) {
-      if (e.touches && e.touches.length === 2) return null;
+      if (e.touches && e.touches.length === 2) return null; // ignore native pinch gestures
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       const rect = mapWrapper.getBoundingClientRect();
@@ -170,9 +152,13 @@
       e.preventDefault();
       const { x, y } = coords;
       const cur = questions[idx];
-      let ok = cur.shape === 'rect'
-        ? x >= cur.coords.x && x <= cur.coords.x + cur.coords.w && y >= cur.coords.y && y <= cur.coords.y + cur.coords.h
-        : pointInPoly(x, y, cur.coords);
+      let ok;
+      if (cur.shape === 'rect') {
+        const c = cur.coords;
+        ok = x >= c.x && x <= c.x + c.w && y >= c.y && y <= c.y + c.h;
+      } else {
+        ok = pointInPoly(x, y, cur.coords);
+      }
       placeMarker(x, y, ok, cur.name);
       if (ok) {
         active = false;
@@ -199,7 +185,6 @@
       loadQuestion();
     }
 
-    // Nasłuchiwacze
     mapWrapper.addEventListener('click', handleInteraction);
     mapWrapper.addEventListener('touchstart', handleInteraction, { passive: false });
     window.addEventListener('orientationchange', () => setTimeout(() => window.dispatchEvent(new Event('resize')), 100));

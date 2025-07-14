@@ -23,7 +23,9 @@
   if (window !== window.parent) {
     const referrer = document.referrer;
     if (!isAllowedReferrer(referrer)) {
-      document.body.innerHTML = "<div style='display:flex;justify-content:center;align-items:center;height:100vh;'><h1 style='color:red;text-align:center;font-size:2rem;'>Ta gra może być osadzana <br>tylko na platformach Bethink lub Więcej niż Matura.</h1></div>";
+      document.addEventListener('DOMContentLoaded', function() {
+        document.body.innerHTML = "<div style='display:flex;justify-content:center;align-items:center;height:100vh;'><h1 style='color:red;text-align:center;font-size:2rem;'>Ta gra może być osadzana <br>tylko na platformach Bethink lub Więcej niż Matura.</h1></div>";
+      });
       // Opcjonalnie blokada działania gry:
       throw new Error("Embedding not allowed outside bethink.pl or wiecejnizmatura.pl!");
     }
@@ -251,7 +253,7 @@
     </div>
 
     <div id="map-wrapper">
-      <img id="map-image" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Europe_map.png/1200px-Europe_map.png" alt="Mapa polityczna Europy">
+      <img id="map-image" src="licensed-image.jpg" alt="Mapa polityczna Europy">
       <div id="marker-container"></div>
     </div>
     
@@ -405,7 +407,14 @@
           text-base md:text-lg shadow-lg">
           🔄 Zagraj jeszcze raz
         </button>`;
-      document.getElementById('reset-btn').onclick = startGame;
+      
+      // Dodaj event listener po utworzeniu przycisku
+      setTimeout(() => {
+        const resetBtn = document.getElementById('reset-btn');
+        if (resetBtn) {
+          resetBtn.onclick = startGame;
+        }
+      }, 100);
     }
 
     function startGame() {
@@ -416,27 +425,38 @@
       loadQuestion();
     }
 
-    // Event listeners for both mouse and touch
-    mapWrapper.addEventListener('click', handleInteraction);
-    mapWrapper.addEventListener('touchstart', handleInteraction, { passive: false });
-    
-    // Prevent context menu on long press
-    mapWrapper.addEventListener('contextmenu', (e) => e.preventDefault());
-    
-    // Prevent zoom on double tap
-    mapWrapper.addEventListener('touchend', (e) => {
-      e.preventDefault();
-    });
+    // Sprawdź czy wszystkie elementy DOM istnieją przed rozpoczęciem
+    function initializeGame() {
+      if (!mapWrapper || !markerContainer || !questionText || !feedbackContainer) {
+        console.error('Nie można znaleźć wszystkich elementów DOM');
+        return;
+      }
+      
+      // Event listeners for both mouse and touch
+      mapWrapper.addEventListener('click', handleInteraction);
+      mapWrapper.addEventListener('touchstart', handleInteraction, { passive: false });
+      
+      // Prevent context menu on long press
+      mapWrapper.addEventListener('contextmenu', (e) => e.preventDefault());
+      
+      // Prevent zoom on double tap
+      mapWrapper.addEventListener('touchend', (e) => {
+        e.preventDefault();
+      });
 
-    // Handle orientation change
-    window.addEventListener('orientationchange', () => {
-      setTimeout(() => {
-        // Force recalculation of layout
-        window.dispatchEvent(new Event('resize'));
-      }, 100);
-    });
+      // Handle orientation change
+      window.addEventListener('orientationchange', () => {
+        setTimeout(() => {
+          // Force recalculation of layout
+          window.dispatchEvent(new Event('resize'));
+        }, 100);
+      });
 
-    startGame();
+      startGame();
+    }
+
+    // Inicjalizuj grę
+    initializeGame();
   });
   </script>
 

@@ -21,30 +21,37 @@
   </script>
 
   <meta charset="UTF-8">
+  <!-- Umożliwia zoomowanie całej strony -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5, user-scalable=yes">
   <title>Odkrywca Mapy Politycznej</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Pełna wysokość i wyłączenie scroll, flex centrowanie */
+    /* Pozwól na zoom całej strony */
     html, body {
-      height: 100vh;
       margin: 0;
       padding: 0;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      touch-action: auto;
+      overflow: auto;
     }
     body { font-family: 'Lato', sans-serif; background-color: #eef2f9; }
     h1, #question-text, button { font-family: 'Roboto Mono', monospace; }
-    .game-container { width: 100%; max-width: 6xl; background: white; border-radius: 1rem; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1); border: 1px solid #e5e7eb; padding: 1rem; }
+    .game-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 1rem auto;
+      background: white;
+      border-radius: 1rem;
+      box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+      border: 1px solid #e5e7eb;
+      padding: 1rem;
+      touch-action: manipulation; /* pozwala na interakcje wewnątrz gry */
+    }
     #map-wrapper {
       position: relative;
       width: 100%;
       margin: auto;
       cursor: crosshair;
-      touch-action: pinch-zoom; /* umożliwia native pinch-zoom i panning */
+      touch-action: none; /* przechwytywanie dotyku wewnątrz mapy */
     }
     #map-image {
       width: 100%;
@@ -57,7 +64,6 @@
     .marker.incorrect { background:rgba(220,38,38,0.9); border:3px solid white; box-shadow:0 2px 8px rgba(0,0,0,0.3); animation:fadeOut 1s forwards; }
     .country-label { position:absolute; transform:translate(-50%,10px); background:rgba(0,0,0,0.8); color:white; padding:6px 12px; border-radius:6px; font-size:14px; white-space:nowrap; z-index:10; font-weight:500; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
     @keyframes fadeOut { from{opacity:1;} to{opacity:0;} }
-    /* Responsywność i inne stylizacje jak przedtem... */
   </style>
 </head>
 <body>
@@ -75,7 +81,6 @@
 
   <script>
   document.addEventListener('DOMContentLoaded', () => {
-    // Punkt-w-wielokącie
     function pointInPoly(x, y, poly) {
       let inside = false;
       for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
@@ -88,7 +93,6 @@
       return inside;
     }
 
-    // Dane gry
     const gameData = [
       { id: 'pl', name: 'Polska', question: 'Zaznacz na mapie Polskę.', shape: 'poly', coords: [[50,45],[48,47],[47,50],[47,54],[49,57],[52,58],[56,56],[58,53],[58,49],[55,47],[52,46]] },
       { id:'es', name:'Hiszpania', question:'Gdzie leży Hiszpania?', shape:'rect', coords:{x:17,y:76,w:15,h:16} },
@@ -120,6 +124,7 @@
     }
 
     function getEventCoords(e) {
+      if (e.touches && e.touches.length === 2) return null; // ignore pinch
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       const rect = mapWrapper.getBoundingClientRect();
@@ -146,19 +151,15 @@
     }
 
     function handleInteraction(e) {
-      // ignore two-finger gestures (native pinch)
-      if (e.touches && e.touches.length === 2) return;
+      const coords = getEventCoords(e);
+      if (!coords) return;
       if (!active) return;
       e.preventDefault();
-      const { x, y } = getEventCoords(e);
+      const { x, y } = coords;
       const cur = questions[idx];
-      let ok = false;
-      if (cur.shape === 'rect') {
-        const c = cur.coords;
-        ok = x >= c.x && x <= c.x + c.w && y >= c.y && y <= c.y + c.h;
-      } else {
-        ok = pointInPoly(x, y, cur.coords);
-      }
+      let ok = cur.shape === 'rect'
+        ? x >= cur.coords.x && x <= cur.coords.x + cur.coords.w && y >= cur.coords.y && y <= cur.coords.y + cur.coords.h
+        : pointInPoly(x, y, cur.coords);
       placeMarker(x, y, ok, cur.name);
       if (ok) {
         active = false;
@@ -185,10 +186,9 @@
       loadQuestion();
     }
 
-    // nasłuchiwacze
+    // Nasłuchiwacze
     mapWrapper.addEventListener('click', handleInteraction);
     mapWrapper.addEventListener('touchstart', handleInteraction, { passive: false });
-    mapWrapper.addEventListener('contextmenu', e => e.preventDefault());
     window.addEventListener('orientationchange', () => setTimeout(() => window.dispatchEvent(new Event('resize')), 100));
 
     startGame();

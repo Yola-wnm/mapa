@@ -1,190 +1,92 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Odkrywca Mapy Politycznej</title>
-
-  <!-- Tailwind – ułatwia szybkie stylowanie; offline można usunąć -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <style>
-    html, body { margin:0; padding:0; height:100%; width:100%; }
-    body { font-family:'Lato',sans-serif; background-color:#eef2f9; }
-
-    .game-container     { height:100%; width:100%; display:flex; flex-direction:column; opacity:0; transition:opacity .5s; }
-    .game-container.loaded { opacity:1; }
-
-    #map-wrapper        { position:relative; flex:1; cursor:pointer; touch-action:manipulation; }
-    #map-image          { width:100%; height:auto; display:block; }
-
-    #marker-container   { position:absolute; inset:0; pointer-events:none; }
-
-    .marker             { position:absolute; width:20px; height:20px; border-radius:50%; display:flex; align-items:center;
-                          justify-content:center; color:#fff; font-weight:bold; transform:translate(-50%,-50%); font-size:12px;
-                          border:2px solid #fff; }
-    .marker.correct     { background:rgba(22,163,74,.95); }
-    .marker.incorrect   { background:rgba(220,38,38,.95); animation:fadeOut 1s forwards; }
-
-    .country-label      { position:absolute; background:rgba(0,0,0,.8); color:#fff; padding:4px 8px; border-radius:4px;
-                          font-size:12px; white-space:nowrap; transform:translate(-50%,-120%); z-index:100; }
-
-    @keyframes fadeOut  { to { opacity:0; } }
-
-    .feedback           { text-align:center; padding:.5rem; min-height:1.5rem; font-weight:bold; }
-    #reset-btn          { margin:.5rem auto; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktywna Mapa Europy</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+        }
+        #map-container {
+            position: relative;
+            width: 800px; /* Szerokość taka sama jak w iFrame */
+            margin: 0 auto;
+        }
+        #map-image {
+            width: 100%;
+            height: auto;
+        }
+        #question {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        #feedback {
+            font-size: 1.1em;
+            font-weight: bold;
+            height: 20px;
+        }
+    </style>
 </head>
 <body>
-  <div id="game" class="game-container">
-    <header class="text-center p-4">
-      <h1 class="text-2xl font-bold">Odkrywca Mapy Politycznej</h1>
-      <p id="progress-text" class="text-sm text-gray-600">Pytanie 1 z 6</p>
-      <p id="question-text" class="text-blue-600 text-lg font-semibold"></p>
-    </header>
 
-    <div id="map-wrapper">
-      <!-- 👇  lokalny plik mapy  -->
-      <img id="map-image"
-           src="licensed-image.jpg"
-           alt="Mapa polityczna Europy">
-      <div id="marker-container"></div>
+    <h1>Interaktywna Mapa Europy</h1>
+    <p>Wskaż na mapie państwo, o które Cię proszę.</p>
+
+    <div id="question"></div>
+    <div id="feedback"></div>
+
+    <div id="map-container">
+        <img src="https://raw.githubusercontent.com/yola-wnm/mapa/main/licensed-image.jpg" usemap="#europe-map" id="map-image">
+        <map name="europe-map">
+            <area shape="poly" coords="245,435,285,420,300,450,260,470" href="#" alt="Hiszpania" data-country="Hiszpania">
+            <area shape="poly" coords="330,350,380,330,400,380,350,400" href="#" alt="Francja" data-country="Francja">
+            <area shape="poly" coords="450,280,500,260,520,310,470,330" href="#" alt="Niemcy" data-country="Niemcy">
+            <area shape="poly" coords="520,350,570,330,590,380,540,400" href="#" alt="Polska" data-country="Polska">
+            <area shape="poly" coords="420,480,480,460,500,510,440,530" href="#" alt="Włochy" data-country="Włochy">
+            </map>
     </div>
 
-    <div id="feedback" class="feedback"></div>
-    <button id="reset-btn"
-            class="hidden bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
-      Zagraj jeszcze raz
-    </button>
-  </div>
+    <script>
+        const countries = [
+            { name: "Hiszpania", coords: "245,435,285,420,300,450,260,470" },
+            { name: "Francja", coords: "330,350,380,330,400,380,350,400" },
+            { name: "Niemcy", coords: "450,280,500,260,520,310,470,330" },
+            { name: "Polska", coords: "520,350,570,330,590,380,540,400" },
+            { name: "Włochy", coords: "420,480,480,460,500,510,440,530" }
+            // Dodaj więcej państw
+        ];
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
+        let currentCountry = null;
 
-      /* --- dane gry: prostokątne „trafienia” (procenty względem obrazka) --- */
-      const gameData = [
-        { id:'pl', name:'Polska',          question:'Zaznacz Polskę.',
-          coords:{ x:50, y:40, w:12, h:12 } },
-        { id:'es', name:'Hiszpania',       question:'Gdzie leży Hiszpania?',
-          coords:{ x:10, y:62, w:15, h:14 } },
-        { id:'it', name:'Włochy',          question:'Zaznacz kraj ze stolicą w Rzymie.',
-          coords:{ x:46, y:57, w:10, h:18 } },
-        { id:'no', name:'Norwegia',        question:'Wskaż Norwegię.',
-          coords:{ x:40, y:12, w:10, h:30 } },
-        { id:'tr', name:'Turcja',          question:'Znajdź Turcję.',
-          coords:{ x:63, y:65, w:20, h:14 } },
-        { id:'ua', name:'Ukraina',         question:'Zaznacz Ukrainę.',
-          coords:{ x:60, y:45, w:18, h:14 } },
-        { id:'fr', name:'Francja',         question:'Wskaż Francję.',
-          coords:{ x:22, y:50, w:15, h:17 } },
-        { id:'de', name:'Niemcy',          question:'Zaznacz Niemcy.',
-          coords:{ x:40, y:40, w:11, h:13 } },
-        { id:'gb', name:'Wielka Brytania', question:'Znajdź Wielką Brytanię.',
-          coords:{ x:22, y:30, w:10, h:20 } },
-        { id:'se', name:'Szwecja',         question:'Wskaż Szwecję.',
-          coords:{ x:52, y:16, w:10, h:25 } }
-      ];
-
-      /* --- referencje DOM --- */
-      const img      = document.getElementById('map-image');
-      const markers  = document.getElementById('marker-container');
-      const qText    = document.getElementById('question-text');
-      const pText    = document.getElementById('progress-text');
-      const feedback = document.getElementById('feedback');
-      const resetBtn = document.getElementById('reset-btn');
-      const gameBox  = document.getElementById('game');
-
-      /* --- stan --- */
-      let questions = [];
-      let idx = 0;
-
-      /* --- helpers --- */
-      const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
-
-      function loadQuestion() {
-        if (idx >= questions.length) return endGame();
-        const cur = questions[idx];
-        qText.textContent = cur.question;
-        pText.textContent = `Pytanie ${idx + 1} z ${questions.length}`;
-        feedback.textContent = '';
-      }
-
-      function endGame() {
-        qText.textContent = 'Gratulacje! Ukończyłeś wyzwanie.';
-        pText.textContent = 'Koniec gry';
-        resetBtn.classList.remove('hidden');
-      }
-
-      function createMarker(xPct, yPct, ok) {
-        const m = document.createElement('div');
-        m.className = `marker ${ok ? 'correct' : 'incorrect'}`;
-        m.style.left = `${xPct}%`;
-        m.style.top  = `${yPct}%`;
-        m.textContent = ok ? '✓' : '✕';
-        markers.appendChild(m);
-        return m;
-      }
-
-      function createLabel(xPct, yPct, text) {
-        const l = document.createElement('div');
-        l.className = 'country-label';
-        l.style.left = `${xPct}%`;
-        l.style.top  = `${yPct}%`;
-        l.textContent = text;
-        markers.appendChild(l);
-      }
-
-      function handlePick(clientX, clientY) {
-        if (!resetBtn.classList.contains('hidden')) return;
-
-        const rect = img.getBoundingClientRect();
-        const xPct = ((clientX - rect.left) / rect.width ) * 100;
-        const yPct = ((clientY - rect.top ) / rect.height) * 100;
-
-        const cur = questions[idx];
-        const {x, y, w, h} = cur.coords;
-        const ok = xPct >= x && xPct <= x+w && yPct >= y && yPct <= y+h;
-
-        const mark = createMarker(xPct, yPct, ok);
-
-        if (ok) {
-          createLabel(xPct, yPct, cur.name);
-          feedback.textContent = '✅ Poprawnie!';
-          feedback.style.color = '#16a34a';
-          idx++;
-          setTimeout(loadQuestion, 1000);
-        } else {
-          feedback.textContent = '❌ Spróbuj jeszcze raz';
-          feedback.style.color = '#dc2626';
-          setTimeout(() => mark.remove(), 800);
+        function askQuestion() {
+            const randomIndex = Math.floor(Math.random() * countries.length);
+            currentCountry = countries[randomIndex];
+            document.getElementById('question').textContent = `Wskaż: ${currentCountry.name}`;
+            document.getElementById('feedback').textContent = '';
         }
-      }
 
-      img.addEventListener('click', e => handlePick(e.clientX, e.clientY));
-      img.addEventListener('touchstart', e => {
-        if (e.touches.length === 1) {
-          const t = e.touches[0];
-          handlePick(t.clientX, t.clientY);
+        function checkAnswer(event) {
+            event.preventDefault();
+            const clickedCountry = event.target.getAttribute('data-country');
+
+            if (clickedCountry === currentCountry.name) {
+                document.getElementById('feedback').textContent = 'Dobrze!';
+                document.getElementById('feedback').style.color = 'green';
+            } else {
+                document.getElementById('feedback').textContent = 'Źle, spróbuj ponownie.';
+                document.getElementById('feedback').style.color = 'red';
+            }
+            setTimeout(askQuestion, 2000); // Zadaj następne pytanie po 2 sekundach
         }
-      }, { passive:true });
 
-      resetBtn.addEventListener('click', startGame);
+        document.querySelectorAll('area').forEach(area => {
+            area.addEventListener('click', checkAnswer);
+        });
 
-      function startGame() {
-        questions = shuffle(gameData).slice(0, 6);
-        idx = 0;
-        markers.innerHTML = '';
-        resetBtn.classList.add('hidden');
-        loadQuestion();
-      }
+        window.onload = askQuestion;
+    </script>
 
-      img.onload  = () => { gameBox.classList.add('loaded'); startGame(); };
-      img.onerror = () => {
-        gameBox.innerHTML =
-          '<div class="p-8 text-center text-red-600"><h2 class="text-xl font-bold">Błąd</h2><p>Nie można załadować obrazka mapy. Sprawdź, czy plik <strong>licensed-image.jpg</strong> istnieje obok index.html.</p></div>';
-        gameBox.classList.add('loaded');
-      };
-    });
-  </script>
 </body>
 </html>

@@ -12,8 +12,8 @@
    .game-container { width: 100%; height: 100%; display: flex; flex-direction: column; opacity: 0; transition: opacity 0.5s; }
    .game-container.loaded { opacity: 1; }
    .header { text-align: center; padding: 1rem; }
-   #map-wrapper { position: relative; flex: 1; cursor: pointer; }
-   #map-image { width: 100%; height: auto; display: block; }
+   #map-wrapper { position: relative; flex: 1; cursor: pointer; touch-action: manipulation; }
+   #map-image { width: 100%; height: auto; display: block; pointer-events: auto; }
    .marker { position: absolute; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; transform: translate(-50%, -50%); }
    .marker.correct { background-color: rgba(22,163,74,0.9); border: 2px solid #fff; }
    .marker.incorrect { background-color: rgba(220,38,38,0.9); border: 2px solid #fff; animation: fadeOut 1s forwards; }
@@ -84,8 +84,11 @@
           }
           
           // Obsługa kliknięć na mapę
-          img.addEventListener('click', (e) => {
+          function handleMapClick(e) {
             if (!resetBtn.classList.contains('hidden')) return;
+            
+            e.preventDefault();
+            e.stopPropagation();
             
             const rect = img.getBoundingClientRect();
             const xPct = ((e.clientX - rect.left) / rect.width) * 100;
@@ -142,7 +145,10 @@
                 }
               }, 800);
             }
-          });
+          
+          // Dodaj event listenery
+          img.addEventListener('click', handleMapClick);
+          img.addEventListener('touchstart', handleMapClick);
           
           resetBtn.addEventListener('click', () => {
             questions = shuffle([...gameData]); 

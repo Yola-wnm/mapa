@@ -14,27 +14,31 @@
    .header { text-align: center; padding: 1rem; }
    #map-wrapper { position: relative; flex: 1; cursor: pointer; touch-action: manipulation; }
    #map-image { width: 100%; height: auto; display: block; pointer-events: auto; }
-   .marker { position: absolute; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; transform: translate(-50%, -50%); }
+   .marker { position: absolute; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; transform: translate(-50%, -50%); font-size: 12px; }
    .marker.correct { background-color: rgba(22,163,74,0.9); border: 2px solid #fff; }
    .marker.incorrect { background-color: rgba(220,38,38,0.9); border: 2px solid #fff; animation: fadeOut 1s forwards; }
-   .country-label { position: absolute; background: rgba(0,0,0,0.7); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; transform: translate(-50%, -120%); }
+   .country-label { position: absolute; background: rgba(0,0,0,0.8); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; transform: translate(-50%, -120%); z-index: 100; }
    @keyframes fadeOut { to { opacity: 0; } }
-   .feedback { text-align: center; padding: 0.5rem; min-height: 1.5rem; }
+   .feedback { text-align: center; padding: 0.5rem; min-height: 1.5rem; font-weight: bold; }
    #reset-btn { margin: 0.5rem auto; display: block; }
+   .progress { text-align: center; padding: 0.5rem; color: #666; }
   </style>
 </head>
 <body>
   <div id="game" class="game-container">
     <div class="header">
       <h1 class="text-2xl font-bold">Odkrywca Mapy Politycznej</h1>
-      <p id="question-text" class="text-blue-600"></p>
+      <div class="progress">
+        <span id="progress-text">Pytanie 1 z 6</span>
+      </div>
+      <p id="question-text" class="text-blue-600 text-lg font-semibold"></p>
     </div>
     <div id="map-wrapper">
       <img id="map-image" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Europe_countries_map_en_2.png/1024px-Europe_countries_map_en_2.png" alt="Mapa polityczna Europy">
       <div id="marker-container"></div>
     </div>
     <div id="feedback" class="feedback"></div>
-    <button id="reset-btn" class="hidden bg-blue-600 text-white py-2 px-4 rounded">Zagraj jeszcze raz</button>
+    <button id="reset-btn" class="hidden bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">Zagraj jeszcze raz</button>
   </div>
   
   <script>
@@ -46,19 +50,24 @@
         img.onload = () => {
           gameContainer.classList.add('loaded');
 
-          // Koordynaty dostosowane do rzeczywistej mapy Europy (w procentach)
+          // Poprawione koordynaty krajów na podstawie rzeczywistej mapy (w procentach)
           const gameData = [
-             { id:'pl', name:'Polska', question:'Zaznacz Polskę.', shape:'rect', coords:{x:52,y:42,w:8,h:8} },
-             { id:'es', name:'Hiszpania', question:'Gdzie leży Hiszpania?', shape:'rect', coords:{x:8,y:68,w:12,h:12} },
-             { id:'it', name:'Włochy', question:'Zaznacz kraj ze stolicą w Rzymie.', shape:'rect', coords:{x:44,y:58,w:8,h:18} },
-             { id:'no', name:'Norwegia', question:'Wskaż Norwegię.', shape:'rect', coords:{x:42,y:8,w:12,h:25} },
-             { id:'tr', name:'Turcja', question:'Znajdź Turcję.', shape:'rect', coords:{x:70,y:65,w:15,h:10} },
-             { id:'ua', name:'Ukraina', question:'Zaznacz Ukrainę.', shape:'rect', coords:{x:68,y:45,w:12,h:10} }
+             { id:'pl', name:'Polska', question:'Zaznacz Polskę.', shape:'rect', coords:{x:51,y:44,w:10,h:8} },
+             { id:'es', name:'Hiszpania', question:'Gdzie leży Hiszpania?', shape:'rect', coords:{x:15,y:65,w:12,h:10} },
+             { id:'it', name:'Włochy', question:'Zaznacz kraj ze stolicą w Rzymie.', shape:'rect', coords:{x:45,y:58,w:8,h:15} },
+             { id:'no', name:'Norwegia', question:'Wskaż Norwegię.', shape:'rect', coords:{x:42,y:15,w:8,h:25} },
+             { id:'tr', name:'Turcja', question:'Znajdź Turcję.', shape:'rect', coords:{x:70,y:70,w:15,h:8} },
+             { id:'ua', name:'Ukraina', question:'Zaznacz Ukrainę.', shape:'rect', coords:{x:65,y:48,w:14,h:10} },
+             { id:'fr', name:'Francja', question:'Wskaż Francję.', shape:'rect', coords:{x:25,y:52,w:10,h:12} },
+             { id:'de', name:'Niemcy', question:'Zaznacz Niemcy.', shape:'rect', coords:{x:42,y:42,w:8,h:10} },
+             { id:'gb', name:'Wielka Brytania', question:'Znajdź Wielką Brytanię.', shape:'rect', coords:{x:25,y:35,w:8,h:12} },
+             { id:'se', name:'Szwecja', question:'Wskaż Szwecję.', shape:'rect', coords:{x:52,y:20,w:6,h:18} }
           ];
           
           let questions, idx = 0;
           const markerContainer = document.getElementById('marker-container');
           const questionText = document.getElementById('question-text');
+          const progressText = document.getElementById('progress-text');
           const feedback = document.getElementById('feedback');
           const resetBtn = document.getElementById('reset-btn');
 
@@ -75,12 +84,14 @@
             if (idx >= questions.length) return showEnd();
             const q = questions[idx];
             questionText.textContent = q.question;
+            progressText.textContent = `Pytanie ${idx + 1} z ${questions.length}`;
             feedback.textContent = '';
             resetBtn.classList.add('hidden');
           }
           
           function showEnd() {
             questionText.textContent = 'Gratulacje! Ukończyłeś wyzwanie.';
+            progressText.textContent = 'Koniec gry';
             resetBtn.classList.remove('hidden');
           }
           
@@ -133,34 +144,58 @@
               label.style.top = `${yPct}%`;
               label.textContent = cur.name;
               markerContainer.appendChild(label);
-              feedback.textContent = '✓ Poprawnie!';
+              feedback.textContent = '✓ Poprawnie! Świetnie!';
               feedback.style.color = '#16a34a';
               idx++;
-              setTimeout(loadQuestion, 1000);
+              setTimeout(loadQuestion, 1500);
             } else {
-              feedback.textContent = '✗ Spróbuj ponownie.';
+              feedback.textContent = '✗ Spróbuj ponownie. Kliknij w odpowiedni kraj.';
               feedback.style.color = '#dc2626';
               setTimeout(() => {
                 if (marker.parentNode) {
                   marker.remove();
                 }
-              }, 800);
+              }, 1000);
+            }
+          }
+          
+          // Obsługa dotyku na urządzeniach mobilnych
+          function handleTouch(e) {
+            if (e.touches.length === 1) {
+              const touch = e.touches[0];
+              const rect = img.getBoundingClientRect();
+              const xPct = ((touch.clientX - rect.left) / rect.width) * 100;
+              const yPct = ((touch.clientY - rect.top) / rect.height) * 100;
+              
+              // Symuluj kliknięcie
+              const clickEvent = {
+                preventDefault: () => {},
+                stopPropagation: () => {},
+                clientX: touch.clientX,
+                clientY: touch.clientY
+              };
+              
+              handleMapClick(clickEvent);
             }
           }
           
           // Dodaj event listenery
           img.addEventListener('click', handleMapClick);
-          img.addEventListener('touchstart', handleMapClick);
+          img.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleTouch(e);
+          });
           
           resetBtn.addEventListener('click', () => {
-            questions = shuffle([...gameData]); 
+            questions = shuffle([...gameData.slice(0, 6)]); // Wybierz 6 losowych krajów
             idx = 0; 
             markerContainer.innerHTML = ''; 
             feedback.textContent = '';
             loadQuestion();
           });
 
-          questions = shuffle([...gameData]);
+          // Inicjalizacja gry
+          questions = shuffle([...gameData.slice(0, 6)]); // Zacznij z 6 krajami
           loadQuestion();
         };
 

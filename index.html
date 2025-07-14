@@ -46,77 +46,223 @@
       font-family: 'Lato', sans-serif;
       background-color: #eef2f9;
     }
+    
     h1, #question-text, button {
       font-family: 'Roboto Mono', monospace;
     }
+    
     #map-wrapper {
       position: relative;
-      max-width: 1000px;
+      max-width: 100%;
       margin: auto;
       cursor: crosshair;
+      touch-action: manipulation;
     }
+    
     #map-image {
       width: 100%;
       display: block;
       border: 1px solid #ccc;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
     }
+    
     .marker {
       position: absolute;
-      width: 30px;
-      height: 30px;
+      width: 35px;
+      height: 35px;
       border-radius: 50%;
       transform: translate(-50%, -50%);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
+      font-size: 24px;
       color: white;
       z-index: 10;
+      font-weight: bold;
     }
+    
     .marker.correct {
-      background: rgba(22, 163, 74, 0.8);
-      border: 2px solid white;
+      background: rgba(22, 163, 74, 0.9);
+      border: 3px solid white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
+    
     .marker.incorrect {
-      background: rgba(220, 38, 38, 0.8);
-      border: 2px solid white;
+      background: rgba(220, 38, 38, 0.9);
+      border: 3px solid white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       animation: fadeOut 1s forwards;
     }
+    
     .country-label {
       position: absolute;
       transform: translate(-50%, 10px);
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.8);
       color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
+      padding: 6px 12px;
+      border-radius: 6px;
       font-size: 14px;
       white-space: nowrap;
       z-index: 10;
+      font-weight: 500;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
+    
     @keyframes fadeOut {
       from { opacity: 1; }
       to   { opacity: 0; }
     }
+
+    /* Responsive styles */
+    @media screen and (max-width: 768px) {
+      body {
+        padding: 8px;
+      }
+      
+      .game-container {
+        padding: 16px;
+        margin: 0;
+      }
+      
+      h1 {
+        font-size: 1.5rem !important;
+        line-height: 1.3;
+        margin-bottom: 8px;
+      }
+      
+      #question-text {
+        font-size: 16px !important;
+        line-height: 1.4;
+        padding: 8px 0;
+        min-height: 50px;
+      }
+      
+      .marker {
+        width: 45px;
+        height: 45px;
+        font-size: 28px;
+        border-width: 4px;
+      }
+      
+      .country-label {
+        font-size: 16px;
+        padding: 8px 14px;
+        border-radius: 8px;
+        transform: translate(-50%, 12px);
+      }
+      
+      #reset-btn {
+        font-size: 16px;
+        padding: 12px 24px;
+        border-radius: 8px;
+      }
+      
+      .feedback-container {
+        margin-top: 16px;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      .game-container {
+        padding: 12px;
+      }
+      
+      h1 {
+        font-size: 1.25rem !important;
+      }
+      
+      #question-text {
+        font-size: 14px !important;
+      }
+      
+      .marker {
+        width: 50px;
+        height: 50px;
+        font-size: 32px;
+      }
+      
+      .country-label {
+        font-size: 14px;
+        padding: 6px 10px;
+      }
+    }
+
+    /* Landscape mode adjustments for mobile */
+    @media screen and (max-height: 500px) and (orientation: landscape) {
+      body {
+        padding: 4px;
+      }
+      
+      .game-container {
+        padding: 8px;
+      }
+      
+      h1 {
+        font-size: 1.25rem !important;
+        margin-bottom: 4px;
+      }
+      
+      #question-text {
+        font-size: 14px !important;
+        min-height: 40px;
+        padding: 4px 0;
+      }
+      
+      .feedback-container {
+        margin-top: 8px;
+      }
+    }
+
+    /* Tablet styles */
+    @media screen and (min-width: 769px) and (max-width: 1024px) {
+      .marker {
+        width: 40px;
+        height: 40px;
+        font-size: 26px;
+      }
+      
+      .country-label {
+        font-size: 15px;
+        padding: 7px 13px;
+      }
+    }
+
+    /* Touch improvements */
+    @media (hover: none) and (pointer: coarse) {
+      #map-wrapper {
+        cursor: pointer;
+      }
+      
+      .marker {
+        pointer-events: none;
+      }
+    }
   </style>
 </head>
-<body class="flex flex-col items-center justify-center p-4">
+<body class="flex flex-col items-center justify-center">
 
-  <div class="w-full max-w-5xl bg-white p-6 rounded-xl shadow-2xl border border-gray-200">
-    <div class="text-center mb-6">
-      <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Odkrywca Mapy Politycznej</h1>
-      <p id="question-text" class="text-blue-600 mt-3 text-lg h-8"></p>
+  <div class="game-container w-full max-w-6xl bg-white rounded-xl shadow-2xl border border-gray-200">
+    <div class="text-center mb-4">
+      <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 mb-2">Odkrywca Mapy Politycznej</h1>
+      <p id="question-text" class="text-blue-600 text-base md:text-lg font-medium min-h-[2rem] md:min-h-[2.5rem] flex items-center justify-center"></p>
     </div>
 
     <div id="map-wrapper">
-      <img id="map-image" src="licensed-image.jpg" alt="Mapa polityczna Europy">
+      <img id="map-image" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Europe_map.png/1200px-Europe_map.png" alt="Mapa polityczna Europy">
       <div id="marker-container"></div>
     </div>
     
-    <div id="feedback-container" class="text-center mt-6 h-10"></div>
+    <div id="feedback-container" class="feedback-container text-center mt-4 min-h-[3rem] flex items-center justify-center"></div>
   </div>
 
   <script>
   document.addEventListener('DOMContentLoaded', () => {
+    // Detect if device is mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    
     // funkcja punkt-w-wielokącie
     function pointInPoly(x, y, poly) {
       let inside = false;
@@ -168,13 +314,31 @@
       if (idx >= questions.length) return endGame();
       active = true;
       questionText.textContent = questions[idx].question;
+      feedbackContainer.innerHTML = '';
     }
 
-    function handleClick(e) {
-      if (!active) return;
+    function getEventCoordinates(e) {
+      // Handle both mouse and touch events
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      
       const rect = mapWrapper.getBoundingClientRect();
-      const xP = (e.clientX - rect.left) / rect.width * 100;
-      const yP = (e.clientY - rect.top)  / rect.height * 100;
+      const xP = (clientX - rect.left) / rect.width * 100;
+      const yP = (clientY - rect.top) / rect.height * 100;
+      
+      return { x: xP, y: yP };
+    }
+
+    function handleInteraction(e) {
+      if (!active) return;
+      
+      // Prevent default behavior
+      e.preventDefault();
+      
+      const coords = getEventCoordinates(e);
+      const xP = coords.x;
+      const yP = coords.y;
+      
       const cur = questions[idx];
       let ok = false;
 
@@ -190,7 +354,26 @@
       if (ok) {
         active = false;
         idx++;
-        setTimeout(loadQuestion, 1200);
+        // Show success feedback
+        feedbackContainer.innerHTML = `
+          <div class="text-green-600 font-medium text-lg">
+            ✓ Świetnie! Prawidłowa odpowiedź!
+          </div>
+        `;
+        setTimeout(() => {
+          feedbackContainer.innerHTML = '';
+          loadQuestion();
+        }, 1200);
+      } else {
+        // Show error feedback briefly
+        feedbackContainer.innerHTML = `
+          <div class="text-red-600 font-medium">
+            ✗ Spróbuj ponownie!
+          </div>
+        `;
+        setTimeout(() => {
+          feedbackContainer.innerHTML = '';
+        }, 1000);
       }
     }
 
@@ -199,7 +382,7 @@
       m.className = `marker ${correct ? 'correct' : 'incorrect'}`;
       m.style.left = `${x}%`;
       m.style.top  = `${y}%`;
-      m.textContent = correct ? '✔' : '✖';
+      m.textContent = correct ? '✓' : '✗';
       markerContainer.appendChild(m);
 
       if (correct) {
@@ -215,11 +398,12 @@
     }
 
     function endGame() {
-      questionText.textContent = "Gratulacje! Ukończyłeś wyzwanie!";
+      questionText.textContent = "🎉 Gratulacje! Ukończyłeś wyzwanie!";
       feedbackContainer.innerHTML = `
-        <button id="reset-btn" class="bg-blue-600 hover:bg-blue-700
-          text-white font-bold py-2 px-6 rounded-lg">
-          Zagraj jeszcze raz
+        <button id="reset-btn" class="bg-blue-600 hover:bg-blue-700 active:bg-blue-800
+          text-white font-bold py-3 px-8 rounded-lg transition-colors duration-200
+          text-base md:text-lg shadow-lg">
+          🔄 Zagraj jeszcze raz
         </button>`;
       document.getElementById('reset-btn').onclick = startGame;
     }
@@ -232,7 +416,26 @@
       loadQuestion();
     }
 
-    mapWrapper.addEventListener('click', handleClick);
+    // Event listeners for both mouse and touch
+    mapWrapper.addEventListener('click', handleInteraction);
+    mapWrapper.addEventListener('touchstart', handleInteraction, { passive: false });
+    
+    // Prevent context menu on long press
+    mapWrapper.addEventListener('contextmenu', (e) => e.preventDefault());
+    
+    // Prevent zoom on double tap
+    mapWrapper.addEventListener('touchend', (e) => {
+      e.preventDefault();
+    });
+
+    // Handle orientation change
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        // Force recalculation of layout
+        window.dispatchEvent(new Event('resize'));
+      }, 100);
+    });
+
     startGame();
   });
   </script>

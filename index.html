@@ -145,17 +145,17 @@
       }
       
       .marker {
-        width: 28px;
-        height: 28px;
-        font-size: 18px;
-        border-width: 2px;
+        width: 45px;
+        height: 45px;
+        font-size: 28px;
+        border-width: 4px;
       }
       
       .country-label {
-        font-size: 13px;
-        padding: 5px 10px;
-        border-radius: 6px;
-        transform: translate(-50%, 8px);
+        font-size: 16px;
+        padding: 8px 14px;
+        border-radius: 8px;
+        transform: translate(-50%, 12px);
       }
       
       #reset-btn {
@@ -183,16 +183,14 @@
       }
       
       .marker {
-        width: 24px;
-        height: 24px;
-        font-size: 16px;
-        border-width: 2px;
+        width: 50px;
+        height: 50px;
+        font-size: 32px;
       }
       
       .country-label {
-        font-size: 12px;
-        padding: 4px 8px;
-        transform: translate(-50%, 6px);
+        font-size: 14px;
+        padding: 6px 10px;
       }
     }
 
@@ -217,19 +215,6 @@
         padding: 4px 0;
       }
       
-      .marker {
-        width: 20px;
-        height: 20px;
-        font-size: 14px;
-        border-width: 1px;
-      }
-      
-      .country-label {
-        font-size: 11px;
-        padding: 3px 6px;
-        transform: translate(-50%, 4px);
-      }
-      
       .feedback-container {
         margin-top: 8px;
       }
@@ -238,16 +223,14 @@
     /* Tablet styles */
     @media screen and (min-width: 769px) and (max-width: 1024px) {
       .marker {
-        width: 32px;
-        height: 32px;
-        font-size: 20px;
-        border-width: 2px;
+        width: 40px;
+        height: 40px;
+        font-size: 26px;
       }
       
       .country-label {
-        font-size: 13px;
-        padding: 5px 10px;
-        transform: translate(-50%, 8px);
+        font-size: 15px;
+        padding: 7px 13px;
       }
     }
 
@@ -374,7 +357,7 @@
         // Show success feedback
         feedbackContainer.innerHTML = `
           <div class="text-green-600 font-medium text-lg">
-            ✓ Świetnie! Prawidłowa odpowiedź!
+            ? Świetnie! Prawidłowa odpowiedź!
           </div>
         `;
         setTimeout(() => {
@@ -385,7 +368,7 @@
         // Show error feedback briefly
         feedbackContainer.innerHTML = `
           <div class="text-red-600 font-medium">
-            ✗ Spróbuj ponownie!
+            ? Spróbuj ponownie!
           </div>
         `;
         setTimeout(() => {
@@ -399,7 +382,7 @@
       m.className = `marker ${correct ? 'correct' : 'incorrect'}`;
       m.style.left = `${x}%`;
       m.style.top  = `${y}%`;
-      m.textContent = correct ? '✓' : '✗';
+      m.textContent = correct ? '?' : '?';
       markerContainer.appendChild(m);
 
       if (correct) {
@@ -415,12 +398,12 @@
     }
 
     function endGame() {
-      questionText.textContent = "🎉 Gratulacje! Ukończyłeś wyzwanie!";
+      questionText.textContent = "?? Gratulacje! Ukończyłeś wyzwanie!";
       feedbackContainer.innerHTML = `
         <button id="reset-btn" class="bg-blue-600 hover:bg-blue-700 active:bg-blue-800
           text-white font-bold py-3 px-8 rounded-lg transition-colors duration-200
           text-base md:text-lg shadow-lg">
-          🔄 Zagraj jeszcze raz
+          ?? Zagraj jeszcze raz
         </button>`;
       
       // Dodaj event listener po utworzeniu przycisku
@@ -478,6 +461,7 @@
 
     // Inicjalizuj grę
     initializeGame();
+  });
   });
   </script>
 

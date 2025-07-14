@@ -2,40 +2,41 @@
 <html lang="pl">
 <head>
   <script>
-  // Lista dozwolonych domen (możesz dodać subdomeny, jeśli potrzeba)
-  const allowedDomains = [
-    "bethink.pl",
-    "wiecejnizmatura.pl"
-  ];
+  (function() {
+    // Lista dozwolonych domen (możesz dodać subdomeny, jeśli potrzeba)
+    const allowedDomains = [
+      "bethink.pl",
+      "wiecejnizmatura.pl"
+    ];
 
-  // Funkcja sprawdzająca, czy referrer zawiera dozwoloną domenę
-  function isAllowedReferrer(ref) {
-    if (!ref) return false;
-    try {
-      const url = new URL(ref);
-      return allowedDomains.some(domain => url.hostname.endsWith(domain));
-    } catch {
-      return false;
+    // Funkcja sprawdzająca, czy referrer zawiera dozwoloną domenę
+    function isAllowedReferrer(ref) {
+      if (!ref) return false;
+      try {
+        const url = new URL(ref);
+        return allowedDomains.some(domain => url.hostname.endsWith(domain));
+      } catch {
+        return false;
+      }
     }
-  }
 
-  // Sprawdź, czy strona jest osadzona w iframe
-  if (window !== window.parent) {
-    const referrer = document.referrer;
-    if (!isAllowedReferrer(referrer)) {
-      // Nie blokuj całkowicie - tylko pokaż komunikat
-      window.addEventListener('load', function() {
-        if (document.body) {
-          document.body.innerHTML = "<div style='display:flex;justify-content:center;align-items:center;height:100vh;'><h1 style='color:red;text-align:center;font-size:2rem;'>Ta gra może być osadzana <br>tylko na platformach Bethink lub Więcej niż Matura.</h1></div>";
-        }
-      });
-      return; // Zatrzymaj dalsze wykonywanie
+    // Sprawdź, czy strona jest osadzona w iframe
+    if (window !== window.parent) {
+      const referrer = document.referrer;
+      if (!isAllowedReferrer(referrer)) {
+        // Nie blokuj całkowicie - tylko pokaż komunikat
+        window.addEventListener('load', function() {
+          if (document.body) {
+            document.body.innerHTML = "<div style='display:flex;justify-content:center;align-items:center;height:100vh;'><h1 style='color:red;text-align:center;font-size:2rem;'>Ta gra może być osadzana <br>tylko na platformach Bethink lub Więcej niż Matura.</h1></div>";
+          }
+        });
+        return; // Zatrzymaj dalsze wykonywanie IIFE
+      }
     }
-  }
-</script>
+  })();
+  </script>
 
   <meta charset="UTF-8">
-  <!-- Pozwól użytkownikowi skalować mapę palcami -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, user-scalable=yes">
   <title>Odkrywca Mapy Politycznej</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -61,8 +62,7 @@
       max-width: 100%;
       margin: auto;
       cursor: crosshair;
-      /* touch-action manipulation pozwala na pinch-zoom i panning */
-      touch-action: manipulation;
+      touch-action: manipulation; /* Pozwala na pinch-zoom i panning */
     }
     
     #map-image {
@@ -75,7 +75,55 @@
       -ms-user-select: none;
     }
     
-    /* ... reszta istniejącego CSS bez zmian ... */
+    .marker {
+      position: absolute;
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: white;
+      z-index: 10;
+      font-weight: bold;
+    }
+    
+    .marker.correct {
+      background: rgba(22, 163, 74, 0.9);
+      border: 3px solid white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    
+    .marker.incorrect {
+      background: rgba(220, 38, 38, 0.9);
+      border: 3px solid white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      animation: fadeOut 1s forwards;
+    }
+    
+    .country-label {
+      position: absolute;
+      transform: translate(-50%, 10px);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      white-space: nowrap;
+      z-index: 10;
+      font-weight: 500;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to   { opacity: 0; }
+    }
+
+    /* Responsywne style */
+    /* ... (reszta CSS bez zmian) ... */
   </style>
 </head>
 <body class="flex flex-col items-center justify-center">
@@ -95,63 +143,4 @@
   </div>
 
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // Detect if device is mobile
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
-    
-    // funkcja punkt-w-wielokącie
-    function pointInPoly(x, y, poly) {
-      let inside = false;
-      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-        const xi = poly[i][0], yi = poly[i][1];
-        const xj = poly[j][0], yj = poly[j][1];
-        const intersect = ((yi > y) !== (yj > y)) &&
-                          (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-        if (intersect) inside = !inside;
-      }
-      return inside;
-    }
-
-    // ... gameData, shuffle, etc. bez zmian ...
-
-    function initializeGame() {
-      mapWrapper = document.getElementById('map-wrapper');
-      markerContainer = document.getElementById('marker-container');
-      questionText = document.getElementById('question-text');
-      feedbackContainer = document.getElementById('feedback-container');
-      
-      if (!mapWrapper || !markerContainer || !questionText || !feedbackContainer) {
-        console.error('Nie można znaleźć wszystkich elementów DOM');
-        setTimeout(initializeGame, 100); // Spróbuj ponownie za 100ms
-        return;
-      }
-      
-      // Event listeners for both mouse and touch
-      mapWrapper.addEventListener('click', handleInteraction);
-      mapWrapper.addEventListener('touchstart', handleInteraction, { passive: false });
-      
-      // Prevent context menu on long press
-      mapWrapper.addEventListener('contextmenu', (e) => e.preventDefault());
-      
-      // Usuń blokowanie domyślnego zachowania na touchend, aby umożliwić pinch-zoom
-      // mapWrapper.addEventListener('touchend', (e) => {
-      //   e.preventDefault();
-      // });
-
-      // Handle orientation change
-      window.addEventListener('orientationchange', () => {
-        setTimeout(() => {
-          window.dispatchEvent(new Event('resize'));
-        }, 100);
-      });
-
-      startGame();
-    }
-
-    // Inicjalizuj grę
-    initializeGame();
-  });
-  </script>
-
-</body>
-</html>
+  document.addEventListener('

@@ -30,7 +30,7 @@
       <p id="question-text" class="text-blue-600"></p>
     </div>
     <div id="map-wrapper">
-      <img id="map-image" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDgwMCA2MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9IiNhZGQ4ZTYiLz4KICA8IS0tIFBvbHNrYSAtLT4KICA8cGF0aCBkPSJNNDAwIDI3MEw0MzQgMjg0TDQ1MCAzMDBMNDcwIDMzMEw0ODAgMzQwTDQ1MCAzNTBMNDMwIDM0MEw0MDAgMzMwTDM4MCAzMjBMNDAwIDI3MFoiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgPHRleHQgeD0iNDE1IiB5PSIzMDUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgZmlsbD0iIzAwMCI+UEw8L3RleHQ+CiAgCiAgPCEtLSBIaXN6cGFuaWEgLS0+CiAgPHJlY3QgeD0iMTM2IiB5PSI0NTYiIHdpZHRoPSIxMjAiIGhlaWdodD0iOTYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgPHRleHQgeD0iMTkwIiB5PSI1MDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgZmlsbD0iIzAwMCI+RVM8L3RleHQ+CiAgCiAgPCEtLSBXxYJvc3N5IC0tPgogIDxyZWN0IHg9IjMxMiIgeT0iNDAyIiB3aWR0aD0iNjQiIGhlaWdodD0iMTAyIiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjMzNiIgeT0iNDUwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiMwMDAiPklUPC90ZXh0PgogIAogIDwhLS0gTm9yd2VnaWEgLS0+CiAgPHJlY3QgeD0iMjcyIiB5PSIxMzgiIHdpZHRoPSIxMDQiIGhlaWdodD0iMTU2IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjMxNiIgeT0iMjEwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiMwMDAiPk5PPC90ZXh0PgogIAogIDwhLS0gVHVyY2phIC0tPgogIDxyZWN0IHg9IjUyOCIgeT0iNDAyIiB3aWR0aD0iMTQ0IiBoZWlnaHQ9Ijg0IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjU5MiIgeT0iNDQwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiMwMDAiPlRSPC90ZXh0PgogIAogIDwhLS0gVWtyYWluYSAtLT4KICA8cmVjdCB4PSI0NTYiIHk9IjMxMiIgd2lkdGg9IjExMiIgaGVpZ2h0PSI3MiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSI1MDYiIHk9IjM0NSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEwIiBmaWxsPSIjMDAwIj5VQTwvdGV4dD4KPC9zdmc+" alt="Mapa polityczna Europy">
+      <img id="map-image" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Europe_countries_map_en_2.png/1024px-Europe_countries_map_en_2.png" alt="Mapa polityczna Europy">
       <div id="marker-container"></div>
     </div>
     <div id="feedback" class="feedback"></div>
@@ -46,13 +46,14 @@
         img.onload = () => {
           gameContainer.classList.add('loaded');
 
+          // Koordynaty dostosowane do rzeczywistej mapy Europy (w procentach)
           const gameData = [
-             { id:'pl', name:'Polska', question:'Zaznacz Polskę.', shape:'rect', coords:{x:48,y:42,w:12,h:16} },
-             { id:'es', name:'Hiszpania', question:'Gdzie leży Hiszpania?', shape:'rect', coords:{x:17,y:76,w:15,h:16} },
-             { id:'it', name:'Włochy', question:'Zaznacz kraj ze stolicą w Rzymie.', shape:'rect', coords:{x:39,y:67,w:8,h:17} },
-             { id:'no', name:'Norwegia', question:'Wskaż Norwegię.', shape:'rect', coords:{x:34,y:23,w:13,h:26} },
-             { id:'tr', name:'Turcja', question:'Znajdź Turcję.', shape:'rect', coords:{x:66,y:67,w:18,h:14} },
-             { id:'ua', name:'Ukraina', question:'Zaznacz Ukrainę.', shape:'rect', coords:{x:57,y:52,w:14,h:12} }
+             { id:'pl', name:'Polska', question:'Zaznacz Polskę.', shape:'rect', coords:{x:52,y:42,w:8,h:8} },
+             { id:'es', name:'Hiszpania', question:'Gdzie leży Hiszpania?', shape:'rect', coords:{x:8,y:68,w:12,h:12} },
+             { id:'it', name:'Włochy', question:'Zaznacz kraj ze stolicą w Rzymie.', shape:'rect', coords:{x:44,y:58,w:8,h:18} },
+             { id:'no', name:'Norwegia', question:'Wskaż Norwegię.', shape:'rect', coords:{x:42,y:8,w:12,h:25} },
+             { id:'tr', name:'Turcja', question:'Znajdź Turcję.', shape:'rect', coords:{x:70,y:65,w:15,h:10} },
+             { id:'ua', name:'Ukraina', question:'Zaznacz Ukrainę.', shape:'rect', coords:{x:68,y:45,w:12,h:10} }
           ];
           
           let questions, idx = 0;
@@ -145,6 +146,7 @@
                 }
               }, 800);
             }
+          }
           
           // Dodaj event listenery
           img.addEventListener('click', handleMapClick);
@@ -163,7 +165,7 @@
         };
 
         img.onerror = () => {
-          gameContainer.innerHTML = `<div style="padding:20px; text-align:center; color:red;"><h1>Błąd</h1><p>Nie można załadować obrazka mapy. Sprawdź, czy ścieżka w atrybucie 'src' jest poprawna.</p></div>`;
+          gameContainer.innerHTML = `<div style="padding:20px; text-align:center; color:red;"><h1>Błąd</h1><p>Nie można załadować obrazka mapy. Sprawdź połączenie internetowe.</p></div>`;
           gameContainer.classList.add('loaded');
         };
       }

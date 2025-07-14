@@ -4,39 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Odkrywca Mapy Politycznej</title>
-  <script>
-    // Autoryzacja osadzania
-    (function() {
-      const allowedDomains = ["bethink.pl", "wiecejnizmatura.pl"];
-      function isAllowed(ref) {
-        try { return ref && allowedDomains.some(d => new URL(ref).hostname.endsWith(d)); }
-        catch { return false; }
-      }
-      if (window !== window.parent && !isAllowed(document.referrer)) {
-        document.addEventListener('DOMContentLoaded', () => {
-          document.body.innerHTML = 
-            `<div style="display:flex;align-items:center;justify-content:center;height:100vh;">
-              <h1 style="color:red;text-align:center;">Ta gra może być osadzana tylko na platformach Bethink lub Więcej niż Matura.</h1>
-            </div>`;
-        });
-      }
-    })();
-  </script>
+  
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    html, body { margin: 0; padding: 0; height: 100%; width: 100%; }
-    body { font-family: 'Lato', sans-serif; background-color: #eef2f9; }
-    .game-container { width: 100%; height: 100%; display: flex; flex-direction: column; }
-    .header { text-align: center; padding: 1rem; }
-    #map-wrapper { position: relative; flex: 1; }
-    #map-image { width: 100%; height: auto; display: block; }
-    .marker { position: absolute; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; }
-    .marker.correct { background-color: rgba(22,163,74,0.9); border: 2px solid #fff; }
-    .marker.incorrect { background-color: rgba(220,38,38,0.9); border: 2px solid #fff; animation: fadeOut 1s forwards; }
-    .country-label { position: absolute; background: rgba(0,0,0,0.7); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; }
-    @keyframes fadeOut { to { opacity: 0; } }
-    .feedback { text-align: center; padding: 0.5rem; min-height: 1.5rem; }
-    #reset-btn { margin: 0.5rem auto; display: block; }
+   html, body { margin: 0; padding: 0; height: 100%; width: 100%; }
+   body { font-family: 'Lato', sans-serif; background-color: #eef2f9; }
+   .game-container { width: 100%; height: 100%; display: flex; flex-direction: column; }
+   .header { text-align: center; padding: 1rem; }
+   #map-wrapper { position: relative; flex: 1; }
+   #map-image { width: 100%; height: auto; display: block; }
+   .marker { position: absolute; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; transform: translate(-50%, -50%); /* Lepsze centrowanie znacznika */ }
+   .marker.correct { background-color: rgba(22,163,74,0.9); border: 2px solid #fff; }
+   .marker.incorrect { background-color: rgba(220,38,38,0.9); border: 2px solid #fff; animation: fadeOut 1s forwards; }
+   .country-label { position: absolute; background: rgba(0,0,0,0.7); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; transform: translate(-50%, -120%); /* Lepsze pozycjonowanie etykiety */ }
+   @keyframes fadeOut { to { opacity: 0; } }
+   .feedback { text-align: center; padding: 0.5rem; min-height: 1.5rem; }
+   #reset-btn { margin: 0.5rem auto; display: block; }
   </style>
 </head>
 <body>
@@ -53,86 +36,93 @@
     <button id="reset-btn" class="hidden bg-blue-600 text-white py-2 px-4 rounded">Zagraj jeszcze raz</button>
   </div>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const gameData = [
-        { id:'pl', name:'Polska', question:'Zaznacz Polskę.', shape:'poly', coords:[[50,45],[48,47],[47,50],[47,54],[49,57],[52,58],[56,56],[58,53],[58,49],[55,47],[52,46]] },
-        { id:'es', name:'Hiszpania', question:'Gdzie leży Hiszpania?', shape:'rect', coords:{x:17,y:76,w:15,h:16} },
-        { id:'it', name:'Włochy', question:'Zaznacz kraj ze stolicą w Rzymie.', shape:'rect', coords:{x:39,y:67,w:8,h:17} },
-        { id:'no', name:'Norwegia', question:'Wskaż Norwegię.', shape:'rect', coords:{x:34,y:23,w:13,h:26} },
-        { id:'tr', name:'Turcja', question:'Znajdź Turcję.', shape:'rect', coords:{x:66,y:67,w:18,h:14} },
-        { id:'ua', name:'Ukraina', question:'Zaznacz Ukrainę.', shape:'rect', coords:{x:57,y:52,w:14,h:12} }
-      ];
-      let questions, idx = 0;
-      const img = document.getElementById('map-image');
-      const markerContainer = document.getElementById('marker-container');
-      const questionText = document.getElementById('question-text');
-      const feedback = document.getElementById('feedback');
-      const resetBtn = document.getElementById('reset-btn');
+   document.addEventListener('DOMContentLoaded', () => {
+     const gameData = [
+       { id:'pl', name:'Polska', question:'Zaznacz Polskę.', shape:'poly', coords:[[50,45],[48,47],[47,50],[47,54],[49,57],[52,58],[56,56],[58,53],[58,49],[55,47],[52,46]] },
+       { id:'es', name:'Hiszpania', question:'Gdzie leży Hiszpania?', shape:'rect', coords:{x:17,y:76,w:15,h:16} },
+       { id:'it', name:'Włochy', question:'Zaznacz kraj ze stolicą w Rzymie.', shape:'rect', coords:{x:39,y:67,w:8,h:17} },
+       { id:'no', name:'Norwegia', question:'Wskaż Norwegię.', shape:'rect', coords:{x:34,y:23,w:13,h:26} },
+       { id:'tr', name:'Turcja', question:'Znajdź Turcję.', shape:'rect', coords:{x:66,y:67,w:18,h:14} },
+       { id:'ua', name:'Ukraina', question:'Zaznacz Ukrainę.', shape:'rect', coords:{x:57,y:52,w:14,h:12} }
+     ];
+     let questions, idx = 0;
+     const img = document.getElementById('map-image');
+     const markerContainer = document.getElementById('marker-container');
+     const questionText = document.getElementById('question-text');
+     const feedback = document.getElementById('feedback');
+     const resetBtn = document.getElementById('reset-btn');
 
-      function shuffle(arr) {
-        return arr.sort(() => Math.random() - 0.5);
-      }
-      function loadQuestion() {
-        if (idx >= questions.length) return showEnd();
-        const q = questions[idx];
-        questionText.textContent = q.question;
-        feedback.textContent = '';
-        resetBtn.classList.add('hidden');
-      }
-      function showEnd() {
-        questionText.textContent = 'Gratulacje! Ukończyłeś wyzwanie.';
-        resetBtn.classList.remove('hidden');
-      }
-      img.addEventListener('click', e => {
-        if (resetBtn.classList.contains('hidden') === false) return;
-        const rect = img.getBoundingClientRect();
-        const xPct = ((e.clientX - rect.left) / rect.width) * 100;
-        const yPct = ((e.clientY - rect.top) / rect.height) * 100;
-        const cur = questions[idx];
-        let correct = false;
-        if (cur.shape === 'rect') {
-          const c = cur.coords;
-          correct = xPct >= c.x && xPct <= c.x + c.w && yPct >= c.y && yPct <= c.y + c.h;
-        } else {
-          correct = (() => {
-            let inside = false;
-            for (let i = 0, j = cur.coords.length - 1; i < cur.coords.length; j = i++) {
-              const xi = cur.coords[i][0], yi = cur.coords[i][1];
-              const xj = cur.coords[j][0], yj = cur.coords[j][1];
-              if (((yi > yPct) !== (yj > yPct)) && (xPct < (xj - xi) * (yPct - yi) / (yj - yi) + xi)) inside = !inside;
-            }
-            return inside;
-          })();
-        }
-        const marker = document.createElement('div');
-        marker.className = `marker ${correct ? 'correct' : 'incorrect'}`;
-        marker.style.left = `${xPct}%`;
-        marker.style.top = `${yPct}%`;
-        marker.textContent = correct ? '✔' : '✖';
-        markerContainer.appendChild(marker);
-        if (correct) {
-          const label = document.createElement('div');
-          label.className = 'country-label';
-          label.style.left = `${xPct}%`;
-          label.style.top = `${yPct}%`;
-          label.textContent = cur.name;
-          markerContainer.appendChild(label);
-          feedback.textContent = '✔ Poprawnie!';
-          idx++;
-          setTimeout(loadQuestion, 1000);
-        } else {
-          feedback.textContent = '✖ Spróbuj ponownie.';
-          setTimeout(() => marker.remove(), 800);
-        }
-      });
-      resetBtn.addEventListener('click', () => {
-        questions = shuffle([...gameData]); idx = 0; markerContainer.innerHTML = ''; loadQuestion();
-      });
+     function shuffle(arr) {
+       return arr.sort(() => Math.random() - 0.5);
+     }
+     function loadQuestion() {
+       if (idx >= questions.length) return showEnd();
+       const q = questions[idx];
+       questionText.textContent = q.question;
+       feedback.textContent = '';
+       resetBtn.classList.add('hidden');
+     }
+     function showEnd() {
+       questionText.textContent = 'Gratulacje! Ukończyłeś wyzwanie.';
+       resetBtn.classList.remove('hidden');
+     }
+     img.addEventListener('click', e => {
+       if (resetBtn.classList.contains('hidden') === false) return;
+       const rect = img.getBoundingClientRect();
+       
+       // ### POCZĄTEK KLUCZOWEJ ZMIANY ###
+       // Używamy `img.offsetWidth` i `img.offsetHeight` zamiast `rect.width` i `rect.height`.
+       // `getBoundingClientRect()` zwraca wymiary wizualne, które są zmieniane przez `transform: scale()`.
+       // `offsetWidth` i `offsetHeight` zwracają wymiary layoutu, które są bardziej stabilne.
+       const xPct = ((e.clientX - rect.left) / img.offsetWidth) * 100;
+       const yPct = ((e.clientY - rect.top) / img.offsetHeight) * 100;
+       // ### KONIEC KLUCZOWEJ ZMIANY ###
+       
+       const cur = questions[idx];
+       let correct = false;
+       if (cur.shape === 'rect') {
+         const c = cur.coords;
+         correct = xPct >= c.x && xPct <= c.x + c.w && yPct >= c.y && yPct <= c.y + c.h;
+       } else {
+         correct = (() => {
+           let inside = false;
+           for (let i = 0, j = cur.coords.length - 1; i < cur.coords.length; j = i++) {
+             const xi = cur.coords[i][0], yi = cur.coords[i][1];
+             const xj = cur.coords[j][0], yj = cur.coords[j][1];
+             if (((yi > yPct) !== (yj > yPct)) && (xPct < (xj - xi) * (yPct - yi) / (yj - yi) + xi)) inside = !inside;
+           }
+           return inside;
+         })();
+       }
+       const marker = document.createElement('div');
+       marker.className = `marker ${correct ? 'correct' : 'incorrect'}`;
+       marker.style.left = `${xPct}%`;
+       marker.style.top = `${yPct}%`;
+       marker.textContent = correct ? '✔' : '✖';
+       markerContainer.appendChild(marker);
+       if (correct) {
+         const label = document.createElement('div');
+         label.className = 'country-label';
+         label.style.left = `${xPct}%`;
+         label.style.top = `${yPct}%`;
+         label.textContent = cur.name;
+         markerContainer.appendChild(label);
+         feedback.textContent = '✔ Poprawnie!';
+         idx++;
+         setTimeout(loadQuestion, 1000);
+       } else {
+         feedback.textContent = '✖ Spróbuj ponownie.';
+         setTimeout(() => marker.remove(), 800);
+       }
+     });
+     resetBtn.addEventListener('click', () => {
+       questions = shuffle([...gameData]); idx = 0; markerContainer.innerHTML = ''; loadQuestion();
+     });
 
-      // Start
-      questions = shuffle([...gameData]);
-      loadQuestion();
-    });
+     // Start
+     questions = shuffle([...gameData]);
+     loadQuestion();
+   });
   </script>
 </body>
 </html>

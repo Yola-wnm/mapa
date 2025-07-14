@@ -9,10 +9,10 @@
   <style>
    html, body { margin: 0; padding: 0; height: 100%; width: 100%; }
    body { font-family: 'Lato', sans-serif; background-color: #eef2f9; }
-   .game-container { width: 100%; height: 100%; display: flex; flex-direction: column; opacity: 0; transition: opacity 0.5s; /* Ukryj na starcie */ }
-   .game-container.loaded { opacity: 1; /* Pokaż po załadowaniu */ }
+   .game-container { width: 100%; height: 100%; display: flex; flex-direction: column; opacity: 0; transition: opacity 0.5s; }
+   .game-container.loaded { opacity: 1; }
    .header { text-align: center; padding: 1rem; }
-   #map-wrapper { position: relative; flex: 1; }
+   #map-wrapper { position: relative; flex: 1; cursor: pointer; /* Dodaj kursor, by pokazać, że mapa jest klikalna */ }
    #map-image { width: 100%; height: auto; display: block; }
    .marker { position: absolute; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; transform: translate(-50%, -50%); }
    .marker.correct { background-color: rgba(22,163,74,0.9); border: 2px solid #fff; }
@@ -38,17 +38,12 @@
   </div>
   
   <script>
-    // ### POCZĄTEK GŁÓWNEJ ZMIANY ###
-    // Czekamy na zdarzenie 'DOMContentLoaded', aby mieć pewność, że wszystkie elementy HTML istnieją.
     document.addEventListener('DOMContentLoaded', () => {
       const img = document.getElementById('map-image');
       const gameContainer = document.getElementById('game');
 
-      // Sprawdzamy, czy obrazek w ogóle istnieje w HTML.
       if (img) {
-        // Uruchamiamy logikę gry DOPIERO po pełnym załadowaniu obrazka.
         img.onload = () => {
-          // Płynne pokazanie gry po załadowaniu mapy.
           gameContainer.classList.add('loaded');
 
           const gameData = [
@@ -79,11 +74,15 @@
           }
           img.addEventListener('click', e => {
             if (resetBtn.classList.contains('hidden') === false) return;
-            const rect = img.getBoundingClientRect();
-            const scaleFactor = 0.7; 
-            const xPct = ((e.clientX - rect.left) / scaleFactor / img.offsetWidth) * 100;
-            const yPct = ((e.clientY - rect.top) / scaleFactor / img.offsetHeight) * 100;
             
+            // ### POCZĄTEK ZMIANY: UPROSZCZENIE OBLICZEŃ ###
+            // Używamy `e.offsetX` i `e.offsetY`. Są to właściwości zdarzenia,
+            // które bezpośrednio podają pozycję kliknięcia względem elementu (obrazka).
+            // To jest znacznie prostsze i bardziej odporne na skomplikowane skalowanie.
+            const xPct = (e.offsetX / img.offsetWidth) * 100;
+            const yPct = (e.offsetY / img.offsetHeight) * 100;
+            // ### KONIEC ZMIANY ###
+
             const cur = questions[idx];
             let correct = false;
             if (cur.shape === 'rect') {
@@ -129,14 +128,12 @@
           loadQuestion();
         };
 
-        // Obsługa błędu, jeśli obrazek się nie załaduje (np. zła ścieżka).
         img.onerror = () => {
           gameContainer.innerHTML = `<div style="padding:20px; text-align:center; color:red;"><h1>Błąd</h1><p>Nie można załadować obrazka mapy. Sprawdź, czy ścieżka w atrybucie 'src' jest poprawna.</p></div>`;
           gameContainer.classList.add('loaded');
         };
       }
     });
-    // ### KONIEC GŁÓWNEJ ZMIANY ###
   </script>
 </body>
 </html>

@@ -23,11 +23,13 @@
   if (window !== window.parent) {
     const referrer = document.referrer;
     if (!isAllowedReferrer(referrer)) {
-      document.addEventListener('DOMContentLoaded', function() {
-        document.body.innerHTML = "<div style='display:flex;justify-content:center;align-items:center;height:100vh;'><h1 style='color:red;text-align:center;font-size:2rem;'>Ta gra może być osadzana <br>tylko na platformach Bethink lub Więcej niż Matura.</h1></div>";
+      // Nie blokuj całkowicie - tylko pokaż komunikat
+      window.addEventListener('load', function() {
+        if (document.body) {
+          document.body.innerHTML = "<div style='display:flex;justify-content:center;align-items:center;height:100vh;'><h1 style='color:red;text-align:center;font-size:2rem;'>Ta gra może być osadzana <br>tylko na platformach Bethink lub Więcej niż Matura.</h1></div>";
+        }
       });
-      // Opcjonalnie blokada działania gry:
-      throw new Error("Embedding not allowed outside bethink.pl or wiecejnizmatura.pl!");
+      return; // Zatrzymaj dalsze wykonywanie
     }
   }
 </script>
@@ -297,12 +299,8 @@
       { id:'ua', name:"Ukraina", question:"Zaznacz Ukrainę.", shape:'rect', coords:{x:57,y:52,w:14,h:12} }
     ];
 
-    const mapWrapper      = document.getElementById('map-wrapper');
-    const markerContainer = document.getElementById('marker-container');
-    const questionText    = document.getElementById('question-text');
-    const feedbackContainer = document.getElementById('feedback-container');
-
     let questions = [], idx = 0, active = true;
+    let mapWrapper, markerContainer, questionText, feedbackContainer;
 
     function shuffle(arr) {
       for (let i = arr.length - 1; i > 0; i--) {
@@ -427,8 +425,14 @@
 
     // Sprawdź czy wszystkie elementy DOM istnieją przed rozpoczęciem
     function initializeGame() {
+      mapWrapper = document.getElementById('map-wrapper');
+      markerContainer = document.getElementById('marker-container');
+      questionText = document.getElementById('question-text');
+      feedbackContainer = document.getElementById('feedback-container');
+      
       if (!mapWrapper || !markerContainer || !questionText || !feedbackContainer) {
         console.error('Nie można znaleźć wszystkich elementów DOM');
+        setTimeout(initializeGame, 100); // Spróbuj ponownie za 100ms
         return;
       }
       
@@ -457,6 +461,7 @@
 
     // Inicjalizuj grę
     initializeGame();
+  });
   });
   </script>
 

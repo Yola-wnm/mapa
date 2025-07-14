@@ -30,7 +30,7 @@
       <p id="question-text" class="text-blue-600"></p>
     </div>
     <div id="map-wrapper">
-      <img id="map-image" src="licensed-image.jpg" alt="Mapa polityczna Europy">
+      <img id="map-image" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDgwMCA2MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9IiNhZGQ4ZTYiLz4KICA8IS0tIFBvbHNrYSAtLT4KICA8cGF0aCBkPSJNNDAwIDI3MEw0MzQgMjg0TDQ1MCAzMDBMNDcwIDMzMEw0ODAgMzQwTDQ1MCAzNTBMNDMwIDM0MEw0MDAgMzMwTDM4MCAzMjBMNDAwIDI3MFoiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgPHRleHQgeD0iNDE1IiB5PSIzMDUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgZmlsbD0iIzAwMCI+UEw8L3RleHQ+CiAgCiAgPCEtLSBIaXN6cGFuaWEgLS0+CiAgPHJlY3QgeD0iMTM2IiB5PSI0NTYiIHdpZHRoPSIxMjAiIGhlaWdodD0iOTYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgPHRleHQgeD0iMTkwIiB5PSI1MDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgZmlsbD0iIzAwMCI+RVM8L3RleHQ+CiAgCiAgPCEtLSBXxYJvc3N5IC0tPgogIDxyZWN0IHg9IjMxMiIgeT0iNDAyIiB3aWR0aD0iNjQiIGhlaWdodD0iMTAyIiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjMzNiIgeT0iNDUwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiMwMDAiPklUPC90ZXh0PgogIAogIDwhLS0gTm9yd2VnaWEgLS0+CiAgPHJlY3QgeD0iMjcyIiB5PSIxMzgiIHdpZHRoPSIxMDQiIGhlaWdodD0iMTU2IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjMxNiIgeT0iMjEwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiMwMDAiPk5PPC90ZXh0PgogIAogIDwhLS0gVHVyY2phIC0tPgogIDxyZWN0IHg9IjUyOCIgeT0iNDAyIiB3aWR0aD0iMTQ0IiBoZWlnaHQ9Ijg0IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjU5MiIgeT0iNDQwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiMwMDAiPlRSPC90ZXh0PgogIAogIDwhLS0gVWtyYWluYSAtLT4KICA8cmVjdCB4PSI0NTYiIHk9IjMxMiIgd2lkdGg9IjExMiIgaGVpZ2h0PSI3MiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSI1MDYiIHk9IjM0NSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEwIiBmaWxsPSIjMDAwIj5VQTwvdGV4dD4KPC9zdmc+" alt="Mapa polityczna Europy">
       <div id="marker-container"></div>
     </div>
     <div id="feedback" class="feedback"></div>
@@ -47,20 +47,29 @@
           gameContainer.classList.add('loaded');
 
           const gameData = [
-             { id:'pl', name:'Polska', question:'Zaznacz Polskę.', shape:'poly', coords:[[50,45],[48,47],[47,50],[47,54],[49,57],[52,58],[56,56],[58,53],[58,49],[55,47],[52,46]] },
+             { id:'pl', name:'Polska', question:'Zaznacz Polskę.', shape:'rect', coords:{x:48,y:42,w:12,h:16} },
              { id:'es', name:'Hiszpania', question:'Gdzie leży Hiszpania?', shape:'rect', coords:{x:17,y:76,w:15,h:16} },
              { id:'it', name:'Włochy', question:'Zaznacz kraj ze stolicą w Rzymie.', shape:'rect', coords:{x:39,y:67,w:8,h:17} },
              { id:'no', name:'Norwegia', question:'Wskaż Norwegię.', shape:'rect', coords:{x:34,y:23,w:13,h:26} },
              { id:'tr', name:'Turcja', question:'Znajdź Turcję.', shape:'rect', coords:{x:66,y:67,w:18,h:14} },
              { id:'ua', name:'Ukraina', question:'Zaznacz Ukrainę.', shape:'rect', coords:{x:57,y:52,w:14,h:12} }
           ];
+          
           let questions, idx = 0;
           const markerContainer = document.getElementById('marker-container');
           const questionText = document.getElementById('question-text');
           const feedback = document.getElementById('feedback');
           const resetBtn = document.getElementById('reset-btn');
 
-          function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
+          function shuffle(arr) { 
+            const result = [...arr];
+            for (let i = result.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [result[i], result[j]] = [result[j], result[i]];
+            }
+            return result;
+          }
+          
           function loadQuestion() {
             if (idx >= questions.length) return showEnd();
             const q = questions[idx];
@@ -68,41 +77,51 @@
             feedback.textContent = '';
             resetBtn.classList.add('hidden');
           }
+          
           function showEnd() {
             questionText.textContent = 'Gratulacje! Ukończyłeś wyzwanie.';
             resetBtn.classList.remove('hidden');
           }
-          img.addEventListener('click', e => {
-            if (resetBtn.classList.contains('hidden') === false) return;
+          
+          // Obsługa kliknięć na mapę
+          img.addEventListener('click', (e) => {
+            if (!resetBtn.classList.contains('hidden')) return;
             
-            // ### POCZĄTEK ZMIANY: POWRÓT DO PODSTAWOWEJ I NAJBARDZIEJ NIEZAWODNEJ METODY ###
             const rect = img.getBoundingClientRect();
             const xPct = ((e.clientX - rect.left) / rect.width) * 100;
             const yPct = ((e.clientY - rect.top) / rect.height) * 100;
-            // ### KONIEC ZMIANY ###
-
+            
+            console.log(`Kliknięcie: ${xPct.toFixed(2)}%, ${yPct.toFixed(2)}%`);
+            
             const cur = questions[idx];
             let correct = false;
+            
             if (cur.shape === 'rect') {
               const c = cur.coords;
               correct = xPct >= c.x && xPct <= c.x + c.w && yPct >= c.y && yPct <= c.y + c.h;
+              console.log(`Sprawdzam ${cur.name}: x=${xPct.toFixed(2)} w zakresie ${c.x}-${c.x+c.w}, y=${yPct.toFixed(2)} w zakresie ${c.y}-${c.y+c.h} = ${correct}`);
             } else {
+              // Obsługa wielokąta (point-in-polygon)
               correct = (() => {
                 let inside = false;
                 for (let i = 0, j = cur.coords.length - 1; i < cur.coords.length; j = i++) {
                   const xi = cur.coords[i][0], yi = cur.coords[i][1];
                   const xj = cur.coords[j][0], yj = cur.coords[j][1];
-                  if (((yi > yPct) !== (yj > yPct)) && (xPct < (xj - xi) * (yPct - yi) / (yj - yi) + xi)) inside = !inside;
+                  if (((yi > yPct) !== (yj > yPct)) && (xPct < (xj - xi) * (yPct - yi) / (yj - yi) + xi)) {
+                    inside = !inside;
+                  }
                 }
                 return inside;
               })();
             }
+            
             const marker = document.createElement('div');
             marker.className = `marker ${correct ? 'correct' : 'incorrect'}`;
             marker.style.left = `${xPct}%`;
             marker.style.top = `${yPct}%`;
-            marker.textContent = correct ? '✔' : '✖';
+            marker.textContent = correct ? '✓' : '✗';
             markerContainer.appendChild(marker);
+            
             if (correct) {
               const label = document.createElement('div');
               label.className = 'country-label';
@@ -110,16 +129,27 @@
               label.style.top = `${yPct}%`;
               label.textContent = cur.name;
               markerContainer.appendChild(label);
-              feedback.textContent = '✔ Poprawnie!';
+              feedback.textContent = '✓ Poprawnie!';
+              feedback.style.color = '#16a34a';
               idx++;
               setTimeout(loadQuestion, 1000);
             } else {
-              feedback.textContent = '✖ Spróbuj ponownie.';
-              setTimeout(() => marker.remove(), 800);
+              feedback.textContent = '✗ Spróbuj ponownie.';
+              feedback.style.color = '#dc2626';
+              setTimeout(() => {
+                if (marker.parentNode) {
+                  marker.remove();
+                }
+              }, 800);
             }
           });
+          
           resetBtn.addEventListener('click', () => {
-            questions = shuffle([...gameData]); idx = 0; markerContainer.innerHTML = ''; loadQuestion();
+            questions = shuffle([...gameData]); 
+            idx = 0; 
+            markerContainer.innerHTML = ''; 
+            feedback.textContent = '';
+            loadQuestion();
           });
 
           questions = shuffle([...gameData]);

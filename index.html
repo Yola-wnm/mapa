@@ -103,8 +103,55 @@
 
     // tap to answer
     wrapper.addEventListener('click', e => {
-      if(!active) return;
-      const rect = wrapper.getBoundingClientRect();
+      if (!active) return;
+      e.preventDefault();
+      // Use transformed image bounding rect to get correct coordinates under transforms
+      const imgRect = mapImg.getBoundingClientRect();
+      const clickX = e.clientX;
+      const clickY = e.clientY;
+      // Calculate percent relative to displayed (transformed) image
+      const x = ((clickX - imgRect.left) / imgRect.width) * 100;
+      const y = ((clickY - imgRect.top) / imgRect.height) * 100;
+      const cur = questions[idx];
+      let ok = false;
+      if (cur.shape === 'rect') {
+        const c = cur.coords;
+        ok = x >= c.x && x <= c.x + c.w && y >= c.y && y <= c.y + c.h;
+      } else {
+        ok = (function() {
+          let inside = false;
+          for (let i = 0, j = cur.coords.length - 1; i < cur.coords.length; j = i++) {
+            const xi = cur.coords[i][0], yi = cur.coords[i][1];
+            const xj = cur.coords[j][0], yj = cur.coords[j][1];
+            const intersect = ((yi > y) !== (yj > y)) &&
+                              (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+            if (intersect) inside = !inside;
+          }
+          return inside;
+        })();
+      }
+      const m = document.createElement('div');
+      m.className = `marker ${ok ? 'correct' : 'incorrect'}`;
+      m.style.left = `${x}%`;
+      m.style.top = `${y}%`;
+      m.textContent = ok ? '✔' : '✖';
+      markerContainer.appendChild(m);
+      if (ok) {
+        const lbl = document.createElement('div');
+        lbl.className = 'country-label';
+        lbl.style.left = `${x}%`;
+        lbl.style.top = `${y}%`;
+        lbl.textContent = cur.name;
+        markerContainer.appendChild(lbl);
+        active = false;
+        feedback.innerHTML = `<div class=\"text-green-600 font-medium text-lg\">✔ Świetnie!</div>`;
+        setTimeout(() => loadQuestion(), 1200);
+      } else {
+        setTimeout(() => m.remove(), 800);
+        feedback.innerHTML = `<div class=\"text-red-600 font-medium\">✖ Spróbuj ponownie!</div>`;
+        setTimeout(() => feedback.innerHTML = '', 1000);
+      }
+    });
       const cx = (e.clientX - rect.left - posX) / scale;
       const cy = (e.clientY - rect.top - posY) / scale;
       const x = cx / rect.width * 100;

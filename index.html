@@ -3,31 +3,16 @@
 <head>
   <script>
   (function() {
-    // Lista dozwolonych domen (możesz dodać subdomeny, jeśli potrzeba)
-    const allowedDomains = [
-      "bethink.pl",
-      "wiecejnizmatura.pl"
-    ];
-
-    // Funkcja sprawdzająca, czy referrer zawiera dozwoloną domenę
+    const allowedDomains = ["bethink.pl","wiecejnizmatura.pl"];
     function isAllowedReferrer(ref) {
       if (!ref) return false;
-      try {
-        const url = new URL(ref);
-        return allowedDomains.some(domain => url.hostname.endsWith(domain));
-      } catch {
-        return false;
-      }
+      try { return allowedDomains.some(d => new URL(ref).hostname.endsWith(d)); } catch { return false; }
     }
-
-    // Sprawdź, czy strona jest osadzona w iframe
     if (window !== window.parent) {
-      const referrer = document.referrer;
-      if (!isAllowedReferrer(referrer)) {
-        window.addEventListener('load', function() {
-          if (document.body) {
-            document.body.innerHTML = "<div style='display:flex;justify-content:center;align-items:center;height:100vh;'><h1 style='color:red;text-align:center;font-size:2rem;'>Ta gra może być osadzana <br>tylko na platformach Bethink lub Więcej niż Matura.</h1></div>";
-          }
+      const ref = document.referrer;
+      if (!isAllowedReferrer(ref)) {
+        window.addEventListener('load', () => {
+          document.body && (document.body.innerHTML = "<div style='display:flex;justify-content:center;align-items:center;height:100vh;'><h1 style='color:red;text-align:center;font-size:2rem;'>Ta gra może być osadzana <br>tylko na platformach Bethink lub Więcej niż Matura.</h1></div>");
         });
         return;
       }
@@ -36,48 +21,35 @@
   </script>
 
   <meta charset="UTF-8">
-  <!-- Umożliwiamy skalowanie w dół i w górę na urządzeniach mobilnych -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5, user-scalable=yes">
   <title>Odkrywca Mapy Politycznej</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Usuń scroll stronicy, ale pozwól na zoom */
     html, body {
       overflow: hidden;
       margin: 0;
       padding: 0;
-      touch-action: auto;
     }
-
-    body {
-      font-family: 'Lato', sans-serif;
-      background-color: #eef2f9;
-    }
-    
-    h1, #question-text, button {
-      font-family: 'Roboto Mono', monospace;
-    }
-    
+    body { font-family: 'Lato', sans-serif; background-color: #eef2f9; }
+    h1, #question-text, button { font-family: 'Roboto Mono', monospace; }
     #map-wrapper {
       position: relative;
-      max-width: 100%;
+      width: 100%;
       margin: auto;
       cursor: crosshair;
-      /* Pozwala na pinch-zoom i panning lokalnie */
-      touch-action: manipulation;
+      touch-action: none; /* przechwytywanie pinch na mapie */
+      transform-origin: center center;
     }
-    
     #map-image {
-      width: 100%;
-      display: block;
-      border: 1px solid #ccc;
-      user-select: none;
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
+      width: 100%; display: block; border: 1px solid #ccc;
+      user-select: none; -webkit-user-select: none;
     }
-    
-    /* ... reszta stylów bez zmian ... */
+    .marker { position: absolute; width: 35px; height: 35px; border-radius:50%; transform: translate(-50%, -50%); display:flex; align-items:center; justify-content:center; font-size:24px; color:white; z-index:10; font-weight:bold; }
+    .marker.correct { background:rgba(22,163,74,0.9); border:3px solid white; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
+    .marker.incorrect { background:rgba(220,38,38,0.9); border:3px solid white; box-shadow:0 2px 8px rgba(0,0,0,0.3); animation:fadeOut 1s forwards; }
+    .country-label { position:absolute; transform:translate(-50%,10px); background:rgba(0,0,0,0.8); color:white; padding:6px 12px; border-radius:6px; font-size:14px; white-space:nowrap; z-index:10; font-weight:500; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
+    @keyframes fadeOut { from{opacity:1;} to{opacity:0;} }
+    /* ... inne responsywne style ... */
   </style>
 </head>
 <body class="flex flex-col items-center justify-center">
@@ -98,46 +70,43 @@
 
   <script>
   document.addEventListener('DOMContentLoaded', () => {
-    // Punkt-w-wielokącie i logika gry bez zmian
-    function pointInPoly(x, y, poly) {
-      let inside = false;
-      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-        const xi = poly[i][0], yi = poly[i][1];
-        const xj = poly[j][0], yj = poly[j][1];
-        const intersect = ((yi > y) !== (yj > y)) &&
-                          (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-        if (intersect) inside = !inside;
-      }
-      return inside;
-    }
+    // Pomocnicze
+    function pointInPoly(x,y,poly){let inside=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++) {const xi=poly[i][0],yi=poly[i][1],xj=poly[j][0],yj=poly[j][1];const intersect=((yi>y)!=(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi);if(intersect) inside=!inside;}return inside;}
+    function getDistance(t1,t2){const dx=t1.clientX-t2.clientX,dy=t1.clientY-t2.clientY;return Math.hypot(dx,dy);}
 
-    const gameData = [...]; // skrócone dla czytelności
-    let questions = [], idx = 0, active = true;
-    let mapWrapper, markerContainer, questionText, feedbackContainer;
+    const gameData=[
+      {id:'pl',name:'Polska',question:'Zaznacz na mapie Polskę.',shape:'poly',coords:[[50,45],[48,47],[47,50],[47,54],[49,57],[52,58],[56,56],[58,53],[58,49],[55,47],[52,46]]},
+      {id:'es',name:'Hiszpania',question:'Gdzie leży Hiszpania?',shape:'rect',coords:{x:17,y:76,w:15,h:16}},
+      {id:'it',name:'Włochy',question:'Zaznacz kraj, którego stolicą jest Rzym.',shape:'rect',coords:{x:39,y:67,w:8,h:17}},
+      {id:'no',name:'Norwegia',question:'Wskaż Norwegię.',shape:'rect',coords:{x:34,y:23,w:13,h:26}},
+      {id:'tr',name:'Turcja',question:'Znajdź Turcję.',shape:'rect',coords:{x:66,y:67,w:18,h:14}},
+      {id:'ua',name:'Ukraina',question:'Zaznacz Ukrainę.',shape:'rect',coords:{x:57,y:52,w:14,h:12}}
+    ];
 
-    function shuffle(arr) { /* ... */ }
-    function loadQuestion() { /* ... */ }
-    function getEventCoordinates(e) { /* ... */ }
-    function handleInteraction(e) { /* ... */ }
-    function placeMarker(x, y, correct, name = '') { /* ... */ }
-    function endGame() { /* ... */ }
-    function startGame() { /* ... */ }
+    let questions=[],idx=0,active=true;
+    let mapWrapper=document.getElementById('map-wrapper'),markerContainer=document.getElementById('marker-container'),questionText=document.getElementById('question-text'),feedbackContainer=document.getElementById('feedback-container');
+    function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+    function loadQuestion(){if(idx>=questions.length)return endGame();active=true;questionText.textContent=questions[idx].question;feedbackContainer.innerHTML='';}
+    function getCoords(e){const c=e.touches?[e.touches[0]]:[];const clientX=e.touches?e.touches[0].clientX:e.clientX;const clientY=e.touches?e.touches[0].clientY:e.clientY;const r=mapWrapper.getBoundingClientRect();return{x:(clientX-r.left)/r.width*100,y:(clientY-r.top)/r.height*100};}
+    function placeMarker(x,y,ok,name=''){const m=document.createElement('div');m.className='marker '+(ok?'correct':'incorrect');m.style.left=x+'%';m.style.top=y+'%';m.textContent=ok?'✔':'✖';markerContainer.appendChild(m);if(ok){const lbl=document.createElement('div');lbl.className='country-label';lbl.style.left=x+'%';lbl.style.top=y+'%';lbl.textContent=name;markerContainer.appendChild(lbl);}else setTimeout(()=>m.remove(),800);}
+    function handleInteraction(e){if(!active)return; if(e.touches&&e.touches.length===2)return; e.preventDefault();const {x,y}=getCoords(e);const cur=questions[idx];let ok=cur.shape==='rect'?x>=cur.coords.x&&x<=cur.coords.x+cur.coords.w&&y>=cur.coords.y&&y<=cur.coords.y+cur.coords.h:pointInPoly(x,y,cur.coords);placeMarker(x,y,ok,cur.name);if(ok){active=false;idx++;feedbackContainer.innerHTML='<div class="text-green-600 font-medium text-lg">✔ Świetnie! Prawidłowa odpowiedź!</div>';setTimeout(()=>{feedbackContainer.innerHTML='';loadQuestion();},1200);}else{feedbackContainer.innerHTML='<div class="text-red-600 font-medium">✖ Spróbuj ponownie!</div>';setTimeout(()=>feedbackContainer.innerHTML='',1000);} }
+    function endGame(){questionText.textContent='🎉 Gratulacje! Ukończyłeś wyzwanie!';feedbackContainer.innerHTML='<button id="reset-btn" class="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-3 px-8 rounded-lg transition-colors duration-200 text-base md:text-lg shadow-lg">🔄 Zagraj jeszcze raz</button>';setTimeout(()=>{document.getElementById('reset-btn').onclick=startGame;},100);}
+    function startGame(){markerContainer.innerHTML='';feedbackContainer.innerHTML='';questions=shuffle([...gameData]);idx=0;loadQuestion();}
 
-    function initializeGame() {
-      mapWrapper = document.getElementById('map-wrapper');
-      markerContainer = document.getElementById('marker-container');
-      questionText = document.getElementById('question-text');
-      feedbackContainer = document.getElementById('feedback-container');
-      mapWrapper.addEventListener('click', handleInteraction);
-      mapWrapper.addEventListener('touchstart', handleInteraction, { passive: false });
-      mapWrapper.addEventListener('contextmenu', e => e.preventDefault());
-      window.addEventListener('orientationchange', () => setTimeout(() => window.dispatchEvent(new Event('resize')), 100));
-      startGame();
-    }
+    // PINCH-ZOOM HANDLERS
+    let startDistance=0,startScale=1,currentScale=1;
+    function onPinchStart(e){if(e.touches.length===2){e.preventDefault();startDistance=getDistance(e.touches[0],e.touches[1]);startScale=currentScale;}}
+    function onPinchMove(e){if(e.touches.length===2){e.preventDefault();const d=getDistance(e.touches[0],e.touches[1]);const scale=startScale*(d/startDistance);currentScale=Math.min(Math.max(scale,0.5),5);mapWrapper.style.transform=`scale(${currentScale})`;}}
+    mapWrapper.addEventListener('touchstart', onPinchStart,{passive:false});
+    mapWrapper.addEventListener('touchmove', onPinchMove,{passive:false});
 
-    initializeGame();
+    mapWrapper.addEventListener('click', handleInteraction);
+    mapWrapper.addEventListener('touchstart', handleInteraction,{passive:false});
+    mapWrapper.addEventListener('contextmenu', e=>e.preventDefault());
+    window.addEventListener('orientationchange',()=>setTimeout(()=>window.dispatchEvent(new Event('resize')),100));
+
+    startGame();
   });
   </script>
-
 </body>
 </html>

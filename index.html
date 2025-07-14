@@ -25,85 +25,171 @@
   <title>Odkrywca Mapy Politycznej</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
+    /* Pełna wysokość i wyłączenie scroll, flex centrowanie */
     html, body {
-      overflow: hidden;
+      height: 100vh;
       margin: 0;
       padding: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
     body { font-family: 'Lato', sans-serif; background-color: #eef2f9; }
     h1, #question-text, button { font-family: 'Roboto Mono', monospace; }
+    .game-container { width: 100%; max-width: 6xl; background: white; border-radius: 1rem; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1); border: 1px solid #e5e7eb; padding: 1rem; }
     #map-wrapper {
       position: relative;
       width: 100%;
       margin: auto;
       cursor: crosshair;
-      touch-action: none; /* przechwytywanie pinch na mapie */
-      transform-origin: center center;
+      touch-action: pinch-zoom; /* umożliwia native pinch-zoom i panning */
     }
     #map-image {
-      width: 100%; display: block; border: 1px solid #ccc;
-      user-select: none; -webkit-user-select: none;
+      width: 100%;
+      display: block;
+      border: 1px solid #ccc;
+      user-select: none;
     }
     .marker { position: absolute; width: 35px; height: 35px; border-radius:50%; transform: translate(-50%, -50%); display:flex; align-items:center; justify-content:center; font-size:24px; color:white; z-index:10; font-weight:bold; }
     .marker.correct { background:rgba(22,163,74,0.9); border:3px solid white; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
     .marker.incorrect { background:rgba(220,38,38,0.9); border:3px solid white; box-shadow:0 2px 8px rgba(0,0,0,0.3); animation:fadeOut 1s forwards; }
     .country-label { position:absolute; transform:translate(-50%,10px); background:rgba(0,0,0,0.8); color:white; padding:6px 12px; border-radius:6px; font-size:14px; white-space:nowrap; z-index:10; font-weight:500; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
     @keyframes fadeOut { from{opacity:1;} to{opacity:0;} }
-    /* ... inne responsywne style ... */
+    /* Responsywność i inne stylizacje jak przedtem... */
   </style>
 </head>
-<body class="flex flex-col items-center justify-center">
-
-  <div class="game-container w-full max-w-6xl bg-white rounded-xl shadow-2xl border border-gray-200">
+<body>
+  <div class="game-container">
     <div class="text-center mb-4">
       <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 mb-2">Odkrywca Mapy Politycznej</h1>
-      <p id="question-text" class="text-blue-600 text-base md:text-lg font-medium min-h-[2rem] md:min-h-[2.5rem] flex items-center justify-center"></p>
+      <p id="question-text" class="text-blue-600 text-base md:text-lg font-medium min-h-[2rem] md:min-h-[2.5rem]"></p>
     </div>
-
     <div id="map-wrapper">
       <img id="map-image" src="licensed-image.jpg" alt="Mapa polityczna Europy">
       <div id="marker-container"></div>
     </div>
-    
-    <div id="feedback-container" class="feedback-container text-center mt-4 min-h-[3rem] flex items-center justify-center"></div>
+    <div id="feedback-container" class="text-center mt-4 min-h-[3rem]"></div>
   </div>
 
   <script>
   document.addEventListener('DOMContentLoaded', () => {
-    // Pomocnicze
-    function pointInPoly(x,y,poly){let inside=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++) {const xi=poly[i][0],yi=poly[i][1],xj=poly[j][0],yj=poly[j][1];const intersect=((yi>y)!=(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi);if(intersect) inside=!inside;}return inside;}
-    function getDistance(t1,t2){const dx=t1.clientX-t2.clientX,dy=t1.clientY-t2.clientY;return Math.hypot(dx,dy);}
+    // Punkt-w-wielokącie
+    function pointInPoly(x, y, poly) {
+      let inside = false;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const xi = poly[i][0], yi = poly[i][1];
+        const xj = poly[j][0], yj = poly[j][1];
+        const intersect = ((yi > y) !== (yj > y)) &&
+                          (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
 
-    const gameData=[
-      {id:'pl',name:'Polska',question:'Zaznacz na mapie Polskę.',shape:'poly',coords:[[50,45],[48,47],[47,50],[47,54],[49,57],[52,58],[56,56],[58,53],[58,49],[55,47],[52,46]]},
-      {id:'es',name:'Hiszpania',question:'Gdzie leży Hiszpania?',shape:'rect',coords:{x:17,y:76,w:15,h:16}},
-      {id:'it',name:'Włochy',question:'Zaznacz kraj, którego stolicą jest Rzym.',shape:'rect',coords:{x:39,y:67,w:8,h:17}},
-      {id:'no',name:'Norwegia',question:'Wskaż Norwegię.',shape:'rect',coords:{x:34,y:23,w:13,h:26}},
-      {id:'tr',name:'Turcja',question:'Znajdź Turcję.',shape:'rect',coords:{x:66,y:67,w:18,h:14}},
-      {id:'ua',name:'Ukraina',question:'Zaznacz Ukrainę.',shape:'rect',coords:{x:57,y:52,w:14,h:12}}
+    // Dane gry
+    const gameData = [
+      { id: 'pl', name: 'Polska', question: 'Zaznacz na mapie Polskę.', shape: 'poly', coords: [[50,45],[48,47],[47,50],[47,54],[49,57],[52,58],[56,56],[58,53],[58,49],[55,47],[52,46]] },
+      { id:'es', name:'Hiszpania', question:'Gdzie leży Hiszpania?', shape:'rect', coords:{x:17,y:76,w:15,h:16} },
+      { id:'it', name:'Włochy', question:'Zaznacz kraj, którego stolicą jest Rzym.', shape:'rect', coords:{x:39,y:67,w:8,h:17} },
+      { id:'no', name:'Norwegia', question:'Wskaż Norwegię.', shape:'rect', coords:{x:34,y:23,w:13,h:26} },
+      { id:'tr', name:'Turcja', question:'Znajdź Turcję.', shape:'rect', coords:{x:66,y:67,w:18,h:14} },
+      { id:'ua', name:'Ukraina', question:'Zaznacz Ukrainę.', shape:'rect', coords:{x:57,y:52,w:14,h:12} }
     ];
 
-    let questions=[],idx=0,active=true;
-    let mapWrapper=document.getElementById('map-wrapper'),markerContainer=document.getElementById('marker-container'),questionText=document.getElementById('question-text'),feedbackContainer=document.getElementById('feedback-container');
-    function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-    function loadQuestion(){if(idx>=questions.length)return endGame();active=true;questionText.textContent=questions[idx].question;feedbackContainer.innerHTML='';}
-    function getCoords(e){const c=e.touches?[e.touches[0]]:[];const clientX=e.touches?e.touches[0].clientX:e.clientX;const clientY=e.touches?e.touches[0].clientY:e.clientY;const r=mapWrapper.getBoundingClientRect();return{x:(clientX-r.left)/r.width*100,y:(clientY-r.top)/r.height*100};}
-    function placeMarker(x,y,ok,name=''){const m=document.createElement('div');m.className='marker '+(ok?'correct':'incorrect');m.style.left=x+'%';m.style.top=y+'%';m.textContent=ok?'✔':'✖';markerContainer.appendChild(m);if(ok){const lbl=document.createElement('div');lbl.className='country-label';lbl.style.left=x+'%';lbl.style.top=y+'%';lbl.textContent=name;markerContainer.appendChild(lbl);}else setTimeout(()=>m.remove(),800);}
-    function handleInteraction(e){if(!active)return; if(e.touches&&e.touches.length===2)return; e.preventDefault();const {x,y}=getCoords(e);const cur=questions[idx];let ok=cur.shape==='rect'?x>=cur.coords.x&&x<=cur.coords.x+cur.coords.w&&y>=cur.coords.y&&y<=cur.coords.y+cur.coords.h:pointInPoly(x,y,cur.coords);placeMarker(x,y,ok,cur.name);if(ok){active=false;idx++;feedbackContainer.innerHTML='<div class="text-green-600 font-medium text-lg">✔ Świetnie! Prawidłowa odpowiedź!</div>';setTimeout(()=>{feedbackContainer.innerHTML='';loadQuestion();},1200);}else{feedbackContainer.innerHTML='<div class="text-red-600 font-medium">✖ Spróbuj ponownie!</div>';setTimeout(()=>feedbackContainer.innerHTML='',1000);} }
-    function endGame(){questionText.textContent='🎉 Gratulacje! Ukończyłeś wyzwanie!';feedbackContainer.innerHTML='<button id="reset-btn" class="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-3 px-8 rounded-lg transition-colors duration-200 text-base md:text-lg shadow-lg">🔄 Zagraj jeszcze raz</button>';setTimeout(()=>{document.getElementById('reset-btn').onclick=startGame;},100);}
-    function startGame(){markerContainer.innerHTML='';feedbackContainer.innerHTML='';questions=shuffle([...gameData]);idx=0;loadQuestion();}
+    let questions = [], idx = 0, active = true;
+    const mapWrapper = document.getElementById('map-wrapper');
+    const markerContainer = document.getElementById('marker-container');
+    const questionText = document.getElementById('question-text');
+    const feedbackContainer = document.getElementById('feedback-container');
 
-    // PINCH-ZOOM HANDLERS
-    let startDistance=0,startScale=1,currentScale=1;
-    function onPinchStart(e){if(e.touches.length===2){e.preventDefault();startDistance=getDistance(e.touches[0],e.touches[1]);startScale=currentScale;}}
-    function onPinchMove(e){if(e.touches.length===2){e.preventDefault();const d=getDistance(e.touches[0],e.touches[1]);const scale=startScale*(d/startDistance);currentScale=Math.min(Math.max(scale,0.5),5);mapWrapper.style.transform=`scale(${currentScale})`;}}
-    mapWrapper.addEventListener('touchstart', onPinchStart,{passive:false});
-    mapWrapper.addEventListener('touchmove', onPinchMove,{passive:false});
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
 
+    function loadQuestion() {
+      if (idx >= questions.length) return endGame();
+      active = true;
+      questionText.textContent = questions[idx].question;
+      feedbackContainer.innerHTML = '';
+    }
+
+    function getEventCoords(e) {
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const rect = mapWrapper.getBoundingClientRect();
+      return { x: (clientX - rect.left) / rect.width * 100, y: (clientY - rect.top) / rect.height * 100 };
+    }
+
+    function placeMarker(x, y, correct, name = '') {
+      const m = document.createElement('div');
+      m.className = `marker ${correct ? 'correct' : 'incorrect'}`;
+      m.style.left = `${x}%`;
+      m.style.top = `${y}%`;
+      m.textContent = correct ? '✔' : '✖';
+      markerContainer.appendChild(m);
+      if (correct) {
+        const lbl = document.createElement('div');
+        lbl.className = 'country-label';
+        lbl.style.left = `${x}%`;
+        lbl.style.top = `${y}%`;
+        lbl.textContent = name;
+        markerContainer.appendChild(lbl);
+      } else {
+        setTimeout(() => m.remove(), 800);
+      }
+    }
+
+    function handleInteraction(e) {
+      // ignore two-finger gestures (native pinch)
+      if (e.touches && e.touches.length === 2) return;
+      if (!active) return;
+      e.preventDefault();
+      const { x, y } = getEventCoords(e);
+      const cur = questions[idx];
+      let ok = false;
+      if (cur.shape === 'rect') {
+        const c = cur.coords;
+        ok = x >= c.x && x <= c.x + c.w && y >= c.y && y <= c.y + c.h;
+      } else {
+        ok = pointInPoly(x, y, cur.coords);
+      }
+      placeMarker(x, y, ok, cur.name);
+      if (ok) {
+        active = false;
+        idx++;
+        feedbackContainer.innerHTML = `<div class="text-green-600 font-medium text-lg">✔ Świetnie! Prawidłowa odpowiedź!</div>`;
+        setTimeout(() => { feedbackContainer.innerHTML = ''; loadQuestion(); }, 1200);
+      } else {
+        feedbackContainer.innerHTML = `<div class="text-red-600 font-medium">✖ Spróbuj ponownie!</div>`;
+        setTimeout(() => { feedbackContainer.innerHTML = ''; }, 1000);
+      }
+    }
+
+    function endGame() {
+      questionText.textContent = '🎉 Gratulacje! Ukończyłeś wyzwanie!';
+      feedbackContainer.innerHTML = `<button id="reset-btn" class="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-3 px-8 rounded-lg transition-colors duration-200 text-base md:text-lg shadow-lg">🔄 Zagraj jeszcze raz</button>`;
+      setTimeout(() => { document.getElementById('reset-btn').onclick = startGame; }, 100);
+    }
+
+    function startGame() {
+      markerContainer.innerHTML = '';
+      feedbackContainer.innerHTML = '';
+      questions = shuffle([...gameData]);
+      idx = 0;
+      loadQuestion();
+    }
+
+    // nasłuchiwacze
     mapWrapper.addEventListener('click', handleInteraction);
-    mapWrapper.addEventListener('touchstart', handleInteraction,{passive:false});
-    mapWrapper.addEventListener('contextmenu', e=>e.preventDefault());
-    window.addEventListener('orientationchange',()=>setTimeout(()=>window.dispatchEvent(new Event('resize')),100));
+    mapWrapper.addEventListener('touchstart', handleInteraction, { passive: false });
+    mapWrapper.addEventListener('contextmenu', e => e.preventDefault());
+    window.addEventListener('orientationchange', () => setTimeout(() => window.dispatchEvent(new Event('resize')), 100));
 
     startGame();
   });

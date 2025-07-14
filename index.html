@@ -21,10 +21,25 @@
   </script>
 
   <meta charset="UTF-8">
-  <!-- Umożliwia zoomowanie całej strony -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5, user-scalable=yes">
+  <!-- Umożliwia zoomowanie całej strony; aktualizowane dynamicznie przy orientacji -->
+  <meta name="viewport" id="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5, user-scalable=yes">
   <title>Odkrywca Mapy Politycznej</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Dostosuj meta viewport przy zmianie orientacji
+    function updateViewport() {
+      const vp = document.getElementById('viewport');
+      if (window.innerWidth > window.innerHeight) {
+        // landscape: bazuj na wysokości urządzenia
+        vp.setAttribute('content', 'width=device-height, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5, user-scalable=yes');
+      } else {
+        // portrait
+        vp.setAttribute('content', 'width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5, user-scalable=yes');
+      }
+    }
+    window.addEventListener('orientationchange', () => setTimeout(updateViewport, 100));
+    window.addEventListener('load', updateViewport);
+  </script>
   <style>
     /* Pozwól na zoom całej strony */
     html, body {
@@ -44,14 +59,14 @@
       box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
       border: 1px solid #e5e7eb;
       padding: 1rem;
-      touch-action: manipulation; /* pozwala na interakcje wewnątrz gry */
+      touch-action: manipulation;
     }
     #map-wrapper {
       position: relative;
       width: 100%;
       margin: auto;
       cursor: crosshair;
-      touch-action: none; /* przechwytywanie dotyku wewnątrz mapy */
+      touch-action: none;
     }
     #map-image {
       width: 100%;
@@ -86,9 +101,7 @@
       for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
         const xi = poly[i][0], yi = poly[i][1];
         const xj = poly[j][0], yj = poly[j][1];
-        const intersect = ((yi > y) !== (yj > y)) &&
-                          (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-        if (intersect) inside = !inside;
+        if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) inside = !inside;
       }
       return inside;
     }
@@ -124,7 +137,7 @@
     }
 
     function getEventCoords(e) {
-      if (e.touches && e.touches.length === 2) return null; // ignore pinch
+      if (e.touches && e.touches.length === 2) return null;
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       const rect = mapWrapper.getBoundingClientRect();

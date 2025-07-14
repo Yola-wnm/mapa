@@ -143,4 +143,137 @@
   </div>
 
   <script>
-  document.addEventListener('
+  document.addEventListener('DOMContentLoaded', () => {
+    // Detect if device is mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    
+    // Punkt-w-wielokącie
+    function pointInPoly(x, y, poly) {
+      let inside = false;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const xi = poly[i][0], yi = poly[i][1];
+        const xj = poly[j][0], yj = poly[j][1];
+        const intersect = ((yi > y) !== (yj > y)) &&
+                          (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
+
+    const gameData = [
+      { id: 'pl', name: "Polska", question: "Zaznacz na mapie Polskę.", shape: 'poly', coords: [[50,45],[48,47],[47,50],[47,54],[49,57],[52,58],[56,56],[58,53],[58,49],[55,47],[52,46]] },
+      { id:'es', name:"Hiszpania", question:"Gdzie leży Hiszpania?", shape:'rect', coords:{x:17,y:76,w:15,h:16} },
+      { id:'it', name:"Włochy", question:"Zaznacz kraj, którego stolicą jest Rzym.", shape:'rect', coords:{x:39,y:67,w:8,h:17} },
+      { id:'no', name:"Norwegia", question:"Wskaż Norwegię.", shape:'rect', coords:{x:34,y:23,w:13,h:26} },
+      { id:'tr', name:"Turcja", question:"Znajdź Turcję.", shape:'rect', coords:{x:66,y:67,w:18,h:14} },
+      { id:'ua', name:"Ukraina", question:"Zaznacz Ukrainę.", shape:'rect', coords:{x:57,y:52,w:14,h:12} }
+    ];
+
+    let questions = [], idx = 0, active = true;
+    let mapWrapper, markerContainer, questionText, feedbackContainer;
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function loadQuestion() {
+      if (idx >= questions.length) return endGame();
+      active = true;
+      questionText.textContent = questions[idx].question;
+      feedbackContainer.innerHTML = '';
+    }
+
+    function getEventCoordinates(e) {
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const rect = mapWrapper.getBoundingClientRect();
+      return { x: (clientX - rect.left) / rect.width * 100, y: (clientY - rect.top) / rect.height * 100 };
+    }
+
+    function handleInteraction(e) {
+      if (!active) return;
+      e.preventDefault();
+      const { x, y } = getEventCoordinates(e);
+      const cur = questions[idx];
+      let ok = false;
+      if (cur.shape === 'rect') {
+        const c = cur.coords;
+        ok = x >= c.x && x <= c.x + c.w && y >= c.y && y <= c.y + c.h;
+      } else {
+        ok = pointInPoly(x, y, cur.coords);
+      }
+      placeMarker(x, y, ok, cur.name);
+      if (ok) {
+        active = false;
+        idx++;
+        feedbackContainer.innerHTML = `<div class="text-green-600 font-medium text-lg">✔ Świetnie! Prawidłowa odpowiedź!</div>`;
+        setTimeout(() => { feedbackContainer.innerHTML = ''; loadQuestion(); }, 1200);
+      } else {
+        feedbackContainer.innerHTML = `<div class="text-red-600 font-medium">✖ Spróbuj ponownie!</div>`;
+        setTimeout(() => { feedbackContainer.innerHTML = ''; }, 1000);
+      }
+    }
+
+    function placeMarker(x, y, correct, name = '') {
+      const m = document.createElement('div');
+      m.className = `marker ${correct ? 'correct' : 'incorrect'}`;
+      m.style.left = `${x}%`;
+      m.style.top  = `${y}%`;
+      m.textContent = correct ? '✔' : '✖';
+      markerContainer.appendChild(m);
+      if (correct) {
+        const lbl = document.createElement('div');
+        lbl.className = 'country-label';
+        lbl.style.left = `${x}%`;
+        lbl.style.top  = `${y}%`;
+        lbl.textContent = name;
+        markerContainer.appendChild(lbl);
+      } else {
+        setTimeout(() => m.remove(), 800);
+      }
+    }
+
+    function endGame() {
+      questionText.textContent = "🎉 Gratulacje! Ukończyłeś wyzwanie!";
+      feedbackContainer.innerHTML = `<button id="reset-btn" class="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-3 px-8 rounded-lg transition-colors duration-200 text-base md:text-lg shadow-lg">🔄 Zagraj jeszcze raz</button>`;
+      setTimeout(() => {
+        const resetBtn = document.getElementById('reset-btn');
+        if (resetBtn) resetBtn.onclick = startGame;
+      }, 100);
+    }
+
+    function startGame() {
+      markerContainer.innerHTML = '';
+      feedbackContainer.innerHTML = '';
+      questions = shuffle([...gameData]);
+      idx = 0;
+      loadQuestion();
+    }
+
+    function initializeGame() {
+      mapWrapper = document.getElementById('map-wrapper');
+      markerContainer = document.getElementById('marker-container');
+      questionText = document.getElementById('question-text');
+      feedbackContainer = document.getElementById('feedback-container');
+      if (!mapWrapper || !markerContainer || !questionText || !feedbackContainer) {
+        console.error('Nie można znaleźć wszystkich elementów DOM');
+        setTimeout(initializeGame, 100);
+        return;
+      }
+      mapWrapper.addEventListener('click', handleInteraction);
+      mapWrapper.addEventListener('touchstart', handleInteraction, { passive: false });
+      mapWrapper.addEventListener('contextmenu', (e) => e.preventDefault());
+      window.addEventListener('orientationchange', () => setTimeout(() => window.dispatchEvent(new Event('resize')), 100));
+      startGame();
+    }
+
+    initializeGame();
+  });
+  </script>
+
+</body>
+</html>
